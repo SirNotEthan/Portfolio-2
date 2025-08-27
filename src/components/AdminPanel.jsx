@@ -4,7 +4,8 @@ import {
   FaGithub, FaStar, FaEye, FaEyeSlash, FaCog, FaSync, FaPlus, 
   FaTrash, FaDownload, FaUpload, FaCheck, FaTimes, FaFilter,
   FaCode, FaGamepad, FaCube, FaMobile, FaRocket, FaExclamationTriangle,
-  FaSignOutAlt, FaClock
+  FaSignOutAlt, FaClock, FaCodeBranch, FaUsers, FaChartLine,
+  FaCalendarAlt, FaMapMarkerAlt, FaBriefcase, FaGlobe
 } from 'react-icons/fa';
 import { useGitHubProjects } from '../hooks/useGitHubProjects';
 import portfolioConfigService from '../services/portfolioConfigService';
@@ -18,6 +19,7 @@ function AdminPanel({ isOpen, onClose }) {
     loading,
     error,
     lastSync,
+    githubStats,
     addRepository,
     removeRepository,
     toggleFeatured,
@@ -121,13 +123,13 @@ function AdminPanel({ isOpen, onClose }) {
       exit={{ opacity: 0 }}
     >
       <motion.div
-        className="bg-card-gradient rounded-xl w-full max-w-6xl h-[90vh] overflow-hidden"
+        className="bg-card-gradient rounded-xl w-full max-w-6xl h-[90vh] overflow-hidden flex flex-col"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
       >
         {/* Header */}
-        <div className="border-b border-gray-700 p-6">
+        <div className="border-b border-gray-700 p-6 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <FaCog className="text-blue-400 text-2xl" />
@@ -164,22 +166,26 @@ function AdminPanel({ isOpen, onClose }) {
           </div>
           
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4">
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mt-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-400">{stats.total}</div>
-              <div className="text-sm text-gray-400">Total Projects</div>
+              <div className="text-sm text-gray-400">Projects</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-yellow-400">{stats.featured}</div>
               <div className="text-sm text-gray-400">Featured</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-400">{stats.totalStars}</div>
+              <div className="text-2xl font-bold text-green-400">{githubStats?.totalStars || stats.totalStars || 0}</div>
               <div className="text-sm text-gray-400">Total Stars</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-400">{selectedRepos.length}</div>
-              <div className="text-sm text-gray-400">Selected Repos</div>
+              <div className="text-2xl font-bold text-purple-400">{githubStats?.totalForks || stats.totalForks || 0}</div>
+              <div className="text-sm text-gray-400">Total Forks</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-cyan-400">{allRepos.length}</div>
+              <div className="text-sm text-gray-400">All Repos</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-red-400">{newRepos.length}</div>
@@ -209,10 +215,11 @@ function AdminPanel({ isOpen, onClose }) {
         )}
 
         {/* Tabs */}
-        <div className="border-b border-gray-700">
+        <div className="border-b border-gray-700 flex-shrink-0">
           <div className="flex">
             {[
               { id: 'repos', label: 'Repositories', icon: FaGithub },
+              { id: 'stats', label: 'GitHub Stats', icon: FaChartLine },
               { id: 'settings', label: 'Settings', icon: FaCog }
             ].map(tab => (
               <button
@@ -232,11 +239,11 @@ function AdminPanel({ isOpen, onClose }) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden min-h-0">
           {activeTab === 'repos' && (
             <div className="h-full flex flex-col">
               {/* Controls */}
-              <div className="p-4 border-b border-gray-700">
+              <div className="p-4 border-b border-gray-700 flex-shrink-0">
                 <div className="flex flex-wrap gap-4 items-center">
                   <input
                     type="text"
@@ -268,7 +275,7 @@ function AdminPanel({ isOpen, onClose }) {
               </div>
 
               {/* Repository List */}
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto p-4 min-h-0" style={{maxHeight: 'calc(90vh - 300px)'}}>
                 {loading ? (
                   <div className="flex items-center justify-center h-32">
                     <div className="text-gray-400">Loading repositories...</div>
@@ -374,8 +381,160 @@ function AdminPanel({ isOpen, onClose }) {
             </div>
           )}
 
+          {activeTab === 'stats' && (
+            <div className="h-full overflow-y-auto p-6">
+              <div className="space-y-6">
+                {githubStats ? (
+                  <>
+                    {/* Profile Stats */}
+                    <div className="bg-black/30 rounded-lg p-6">
+                      <div className="flex items-center gap-4 mb-6">
+                        <img 
+                          src={githubStats.avatarUrl} 
+                          alt={githubStats.name || githubStats.username}
+                          className="w-16 h-16 rounded-full"
+                        />
+                        <div>
+                          <h3 className="text-xl font-bold text-white">
+                            {githubStats.name || githubStats.username}
+                          </h3>
+                          <p className="text-gray-400">@{githubStats.username}</p>
+                          {githubStats.bio && (
+                            <p className="text-gray-300 mt-2">{githubStats.bio}</p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-blue-400">{githubStats.publicRepos}</div>
+                          <div className="text-sm text-gray-400">Public Repos</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-green-400">{githubStats.followers}</div>
+                          <div className="text-sm text-gray-400">Followers</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-purple-400">{githubStats.following}</div>
+                          <div className="text-sm text-gray-400">Following</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-yellow-400">{githubStats.publicGists}</div>
+                          <div className="text-sm text-gray-400">Public Gists</div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-4 text-sm text-gray-400">
+                        {githubStats.company && (
+                          <div className="flex items-center gap-2">
+                            <FaBriefcase />
+                            <span>{githubStats.company}</span>
+                          </div>
+                        )}
+                        {githubStats.location && (
+                          <div className="flex items-center gap-2">
+                            <FaMapMarkerAlt />
+                            <span>{githubStats.location}</span>
+                          </div>
+                        )}
+                        {githubStats.blog && (
+                          <div className="flex items-center gap-2">
+                            <FaGlobe />
+                            <a href={githubStats.blog} target="_blank" rel="noopener noreferrer" 
+                               className="hover:text-blue-400 transition-colors">
+                              {githubStats.blog}
+                            </a>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <FaCalendarAlt />
+                          <span>Joined {new Date(githubStats.createdAt).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Repository Stats */}
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="bg-black/30 rounded-lg p-6">
+                        <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                          <FaStar className="text-yellow-400" />
+                          Repository Overview
+                        </h3>
+                        <div className="space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Total Stars:</span>
+                            <span className="text-green-400 font-semibold">{githubStats.totalStars}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Total Forks:</span>
+                            <span className="text-blue-400 font-semibold">{githubStats.totalForks}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Total Size:</span>
+                            <span className="text-purple-400 font-semibold">{Math.round(githubStats.totalSize / 1024)} MB</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Languages Used:</span>
+                            <span className="text-cyan-400 font-semibold">{githubStats.languages.length}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-black/30 rounded-lg p-6">
+                        <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                          <FaChartLine className="text-green-400" />
+                          Recent Activity
+                        </h3>
+                        <div className="space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Recently Updated (30 days):</span>
+                            <span className="text-green-400 font-semibold">{githubStats.recentActivity.recentlyUpdated}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Active Repos (90 days):</span>
+                            <span className="text-blue-400 font-semibold">{githubStats.recentActivity.activeRepos}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Activity Rate:</span>
+                            <span className="text-purple-400 font-semibold">
+                              {Math.round((githubStats.recentActivity.activeRepos / githubStats.recentActivity.totalRepos) * 100)}%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Languages */}
+                    <div className="bg-black/30 rounded-lg p-6">
+                      <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                        <FaCode className="text-blue-400" />
+                        Programming Languages
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {githubStats.languages.map(language => (
+                          <span
+                            key={language}
+                            className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm"
+                          >
+                            {language}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="bg-black/30 rounded-lg p-8 text-center">
+                    <FaChartLine className="text-gray-400 text-4xl mb-4 mx-auto" />
+                    <h3 className="text-white font-semibold mb-2">Loading GitHub Stats</h3>
+                    <p className="text-gray-400">Fetching your GitHub statistics...</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {activeTab === 'settings' && (
-            <div className="p-6 overflow-y-auto">
+            <div className="h-full overflow-y-auto p-6">
               <div className="space-y-6">
                 {/* Export/Import */}
                 <div className="bg-black/30 rounded-lg p-4">

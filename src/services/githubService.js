@@ -1,5 +1,9 @@
 const GITHUB_USERNAME = 'SirNotEthan';
 const GITHUB_API_BASE = 'https://api.github.com';
+const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
+
+// GitHub Service initialized
+console.log(`GitHub Service: Token ${GITHUB_TOKEN ? 'loaded' : 'missing'} for ${GITHUB_USERNAME}`);
 
 class GitHubService {
   constructor() {
@@ -13,14 +17,32 @@ class GitHubService {
       return cached.data;
     }
 
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`GitHub API error: ${response.status}`);
+    const headers = {};
+    if (GITHUB_TOKEN) {
+      headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
     }
 
-    const data = await response.json();
-    this.cache.set(cacheKey, { data, timestamp: Date.now() });
-    return data;
+    try {
+      const response = await fetch(url, { headers });
+      
+      if (!response.ok) {
+        if (response.status === 403) {
+          const rateLimitReset = response.headers.get('X-RateLimit-Reset');
+          const resetTime = rateLimitReset ? new Date(rateLimitReset * 1000) : null;
+          throw new Error(`GitHub API rate limit exceeded. ${resetTime ? `Resets at ${resetTime.toLocaleTimeString()}` : 'Try again later.'}`);
+        }
+        throw new Error(`GitHub API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      this.cache.set(cacheKey, { data, timestamp: Date.now() });
+      return data;
+    } catch (error) {
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Network error: Unable to connect to GitHub API');
+      }
+      throw error;
+    }
   }
 
   async getUserRepos() {
@@ -41,7 +63,12 @@ class GitHubService {
   async getRepoReadme(repoName) {
     try {
       const url = `${GITHUB_API_BASE}/repos/${GITHUB_USERNAME}/${repoName}/readme`;
-      const response = await fetch(url);
+      const headers = {};
+      if (GITHUB_TOKEN) {
+        headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
+      }
+      
+      const response = await fetch(url, { headers });
       if (!response.ok) return null;
       
       const data = await response.json();
@@ -172,7 +199,14 @@ class GitHubService {
   generatePlaceholderImage(repo) {
     const colors = ['FF6B6B', '4ECDC4', '45B7D1', '96CEB4', 'FFEAA7', 'DDA0DD'];
     const color = colors[repo.id % colors.length];
-    return `https://via.placeholder.com/1280x720/${color}/FFFFFF?text=${encodeURIComponent(repo.name)}`;
+    
+    // Generate SVG placeholder to avoid network dependency
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+      <rect width="1280" height="720" fill="#${color}"/>
+      <text x="640" y="360" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="Arial, sans-serif" font-size="48" font-weight="bold">${repo.name}</text>
+    </svg>`;
+    
+    return `data:image/svg+xml;base64,${btoa(svg)}`;
   }
 
   async getPortfolioProjects(selectedRepos = []) {
@@ -217,14 +251,91 @@ class GitHubService {
           forks: repo.forks_count,
           topics: repo.topics || [],
           updatedAt: repo.updated_at,
+          createdAt: repo.created_at,
           url: repo.html_url,
-          archived: repo.archived
+          archived: repo.archived,
+          size: repo.size,
+          openIssues: repo.open_issues_count,
+          watchers: repo.watchers_count,
+          hasWiki: repo.has_wiki,
+          hasPages: repo.has_pages,
+          defaultBranch: repo.default_branch
         }))
         .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
     } catch (error) {
       console.error('Error fetching all repos:', error);
       return [];
     }
+  }
+
+  async getRepoCommitStats(repoName) {
+    try {
+      const url = `${GITHUB_API_BASE}/repos/${GITHUB_USERNAME}/${repoName}/stats/participation`;
+      return this.fetchWithCache(url, `commits_${repoName}`);
+    } catch (error) {
+      console.warn(`Error fetching commit stats for ${repoName}:`, error);
+      return null;
+    }
+  }
+
+  async getUserStats() {
+    try {
+      const [userInfo, repos] = await Promise.all([
+        this.fetchWithCache(`${GITHUB_API_BASE}/user`, 'user_info'),
+        this.getUserRepos()
+      ]);
+
+      const publicRepos = repos.filter(repo => !repo.private);
+      const totalStars = publicRepos.reduce((sum, repo) => sum + (repo.stargazers_count || 0), 0);
+      const totalForks = publicRepos.reduce((sum, repo) => sum + (repo.forks_count || 0), 0);
+      const languages = [...new Set(publicRepos.map(repo => repo.language).filter(Boolean))];
+      const totalSize = publicRepos.reduce((sum, repo) => sum + (repo.size || 0), 0);
+
+      return {
+        username: userInfo.login,
+        name: userInfo.name,
+        bio: userInfo.bio,
+        location: userInfo.location,
+        company: userInfo.company,
+        blog: userInfo.blog,
+        twitterUsername: userInfo.twitter_username,
+        publicRepos: userInfo.public_repos,
+        publicGists: userInfo.public_gists,
+        followers: userInfo.followers,
+        following: userInfo.following,
+        createdAt: userInfo.created_at,
+        updatedAt: userInfo.updated_at,
+        avatarUrl: userInfo.avatar_url,
+        totalStars,
+        totalForks,
+        languages,
+        totalSize,
+        recentActivity: this.calculateRecentActivity(publicRepos)
+      };
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
+      return null;
+    }
+  }
+
+  calculateRecentActivity(repos) {
+    const now = Date.now();
+    const oneMonthAgo = now - (30 * 24 * 60 * 60 * 1000);
+    const threeMonthsAgo = now - (90 * 24 * 60 * 60 * 1000);
+
+    const recentlyUpdated = repos.filter(repo => 
+      new Date(repo.updated_at).getTime() > oneMonthAgo
+    ).length;
+
+    const activeRepos = repos.filter(repo => 
+      new Date(repo.updated_at).getTime() > threeMonthsAgo
+    ).length;
+
+    return {
+      recentlyUpdated,
+      activeRepos,
+      totalRepos: repos.length
+    };
   }
 }
 

@@ -1,7 +1,7 @@
 import { Link } from 'react-scroll';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaTwitter, FaDiscord, FaReact, FaNodeJs, FaGithub, FaDocker, FaCss3, FaExternalLinkAlt, FaCode, FaRocket, FaLightbulb, FaGamepad, FaCube, FaFilter, FaStar, FaEye, FaCog } from 'react-icons/fa';
+import { FaTwitter, FaDiscord, FaReact, FaNodeJs, FaGithub, FaDocker, FaCss3, FaExternalLinkAlt, FaCode, FaRocket, FaLightbulb, FaGamepad, FaCube, FaFilter, FaStar, FaEye, FaCog, FaCodeBranch, FaUsers, FaChartLine } from 'react-icons/fa';
 import { SiTailwindcss, SiPostgresql, SiJavascript, SiTypescript, SiHtml5, SiMongodb, SiDiscord, SiLua, SiBlender, SiRoblox } from 'react-icons/si';
 import { HiMenu, HiX } from 'react-icons/hi';
 import { useGitHubProjects } from '../hooks/useGitHubProjects';
@@ -16,7 +16,6 @@ function LandingPage() {
     const horizontalContainerRef = useRef(null);
     const [projectImageIndices, setProjectImageIndices] = useState({});
     const [selectedCategory, setSelectedCategory] = useState('All');
-    const [githubStats, setGithubStats] = useState(null);
     const [currentSection, setCurrentSection] = useState(0);
     const sectionsRef = useRef([]);
     const [showAdminPanel, setShowAdminPanel] = useState(false);
@@ -26,6 +25,7 @@ function LandingPage() {
     const {
         projects: githubProjects,
         loading: projectsLoading,
+        githubStats,
         getFeaturedProjects,
         getProjectsByCategory,
         getProjectStats
@@ -105,13 +105,11 @@ function LandingPage() {
     };
 
     const handleAdminLogin = (password) => {
-        // Simple password check - in production, this should be more secure
         const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD
         
         if (password === ADMIN_PASSWORD) {
             sessionStorage.setItem('portfolio_admin_auth', 'true');
-            sessionStorage.setIte
-            m('portfolio_admin_auth_time', Date.now().toString());
+            sessionStorage.setItem('portfolio_admin_auth_time', Date.now().toString());
             
             setIsAuthenticated(true);
             setShowAdminLogin(false);
@@ -149,7 +147,7 @@ function LandingPage() {
             name: "GitHub Integration Loading...",
             description: "Loading projects from GitHub...",
             longDescription: "Your projects will be loaded automatically from your GitHub repositories.",
-            images: ["https://via.placeholder.com/1280x720/4ECDC4/FFFFFF?text=Loading"],
+            images: ["data:image/svg+xml;base64," + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720"><rect width="1280" height="720" fill="#4ECDC4"/><text x="640" y="360" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="Arial, sans-serif" font-size="48" font-weight="bold">Loading</text></svg>')],
             technologies: ['GitHub API', 'React'],
             link: "#",
             githubLink: "https://github.com/SirNotEthan",
@@ -463,7 +461,7 @@ function LandingPage() {
                         </p>
                     </motion.div>
 
-                    <div className="grid md:grid-cols-3 gap-8">
+                    <div className="grid md:grid-cols-3 gap-8 mb-16">
                         {[
                             { icon: <FaCode />, title: 'Clean Code', desc: 'Writing maintainable, scalable, and efficient code' },
                             { icon: <FaRocket />, title: 'Performance', desc: 'Optimizing for speed and user experience' },
@@ -484,6 +482,143 @@ function LandingPage() {
                             </motion.div>
                         ))}
                     </div>
+
+                    {/* GitHub Stats Section */}
+                    {githubStats && githubStats.recentActivity && (
+                        <motion.div
+                            className="mt-16"
+                            initial={{ opacity: 0, y: 50 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8 }}
+                            viewport={{ once: true }}
+                        >
+                            <div className="text-center mb-12">
+                                <h3 className="text-3xl font-bold text-white mb-4 flex items-center justify-center gap-3">
+                                    <FaGithub className="text-blue-400" />
+                                    GitHub Activity
+                                </h3>
+                                <p className="text-gray-300 text-lg">
+                                    Live statistics from my GitHub profile
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+                                <motion.div
+                                    className="bg-card-gradient p-6 rounded-xl glow-effect text-center"
+                                    whileHover={{ scale: 1.05 }}
+                                    initial={{ opacity: 0, y: 30 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.6, delay: 0.1 }}
+                                    viewport={{ once: true }}
+                                >
+                                    <FaGithub className="text-blue-400 text-3xl mb-3 mx-auto" />
+                                    <div className="text-2xl font-bold text-white mb-1">{githubStats.publicRepos}</div>
+                                    <div className="text-gray-400 text-sm">Public Repos</div>
+                                </motion.div>
+
+                                <motion.div
+                                    className="bg-card-gradient p-6 rounded-xl glow-effect text-center"
+                                    whileHover={{ scale: 1.05 }}
+                                    initial={{ opacity: 0, y: 30 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.6, delay: 0.2 }}
+                                    viewport={{ once: true }}
+                                >
+                                    <FaStar className="text-yellow-400 text-3xl mb-3 mx-auto" />
+                                    <div className="text-2xl font-bold text-white mb-1">{githubStats.totalStars}</div>
+                                    <div className="text-gray-400 text-sm">Total Stars</div>
+                                </motion.div>
+
+                                <motion.div
+                                    className="bg-card-gradient p-6 rounded-xl glow-effect text-center"
+                                    whileHover={{ scale: 1.05 }}
+                                    initial={{ opacity: 0, y: 30 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.6, delay: 0.3 }}
+                                    viewport={{ once: true }}
+                                >
+                                    <FaCodeBranch className="text-green-400 text-3xl mb-3 mx-auto" />
+                                    <div className="text-2xl font-bold text-white mb-1">{githubStats.totalForks}</div>
+                                    <div className="text-gray-400 text-sm">Total Forks</div>
+                                </motion.div>
+
+                                <motion.div
+                                    className="bg-card-gradient p-6 rounded-xl glow-effect text-center"
+                                    whileHover={{ scale: 1.05 }}
+                                    initial={{ opacity: 0, y: 30 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.6, delay: 0.4 }}
+                                    viewport={{ once: true }}
+                                >
+                                    <FaUsers className="text-purple-400 text-3xl mb-3 mx-auto" />
+                                    <div className="text-2xl font-bold text-white mb-1">{githubStats.followers}</div>
+                                    <div className="text-gray-400 text-sm">Followers</div>
+                                </motion.div>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-8">
+                                <motion.div
+                                    className="bg-card-gradient p-6 rounded-xl glow-effect"
+                                    initial={{ opacity: 0, x: -30 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    transition={{ duration: 0.6, delay: 0.5 }}
+                                    viewport={{ once: true }}
+                                >
+                                    <h4 className="text-white font-bold mb-4 flex items-center gap-2">
+                                        <FaChartLine className="text-green-400" />
+                                        Recent Activity
+                                    </h4>
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-400">Recently Updated:</span>
+                                            <span className="text-green-400 font-semibold">{githubStats?.recentActivity?.recentlyUpdated || 0} repos</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-400">Active Projects:</span>
+                                            <span className="text-blue-400 font-semibold">{githubStats?.recentActivity?.activeRepos || 0} repos</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-400">Activity Rate:</span>
+                                            <span className="text-purple-400 font-semibold">
+                                                {githubStats?.recentActivity?.totalRepos > 0 
+                                                    ? Math.round((githubStats.recentActivity.activeRepos / githubStats.recentActivity.totalRepos) * 100)
+                                                    : 0
+                                                }%
+                                            </span>
+                                        </div>
+                                    </div>
+                                </motion.div>
+
+                                <motion.div
+                                    className="bg-card-gradient p-6 rounded-xl glow-effect"
+                                    initial={{ opacity: 0, x: 30 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    transition={{ duration: 0.6, delay: 0.6 }}
+                                    viewport={{ once: true }}
+                                >
+                                    <h4 className="text-white font-bold mb-4 flex items-center gap-2">
+                                        <FaCode className="text-blue-400" />
+                                        Languages
+                                    </h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {(githubStats?.languages || []).slice(0, 8).map((language) => (
+                                            <span
+                                                key={language}
+                                                className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm border border-blue-500/30"
+                                            >
+                                                {language}
+                                            </span>
+                                        ))}
+                                        {(githubStats?.languages?.length || 0) > 8 && (
+                                            <span className="px-3 py-1 bg-gray-500/20 text-gray-400 rounded-full text-sm">
+                                                +{githubStats.languages.length - 8} more
+                                            </span>
+                                        )}
+                                    </div>
+                                </motion.div>
+                            </div>
+                        </motion.div>
+                    )}
                 </div>
                 </section>
 

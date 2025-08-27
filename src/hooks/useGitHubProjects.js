@@ -9,6 +9,7 @@ export const useGitHubProjects = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastSync, setLastSync] = useState(null);
+  const [githubStats, setGithubStats] = useState(null);
 
   const fetchProjects = useCallback(async (forceRefresh = false) => {
     try {
@@ -105,10 +106,22 @@ export const useGitHubProjects = () => {
     return selectedRepoNames;
   }, [fetchAllRepos, fetchProjects]);
 
+  const fetchGithubStats = useCallback(async () => {
+    try {
+      const stats = await githubService.getUserStats();
+      setGithubStats(stats);
+      return stats;
+    } catch (err) {
+      console.error('Error fetching GitHub stats:', err);
+      return null;
+    }
+  }, []);
+
   const syncProjects = useCallback(async () => {
     await fetchProjects(true);
     await fetchAllRepos();
-  }, [fetchProjects, fetchAllRepos]);
+    await fetchGithubStats();
+  }, [fetchProjects, fetchAllRepos, fetchGithubStats]);
 
   useEffect(() => {
     const performInitialSync = async () => {
@@ -116,12 +129,13 @@ export const useGitHubProjects = () => {
         await syncProjects();
       } else {
         await fetchProjects();
+        await fetchAllRepos();
+        await fetchGithubStats();
       }
-      await fetchAllRepos();
     };
 
     performInitialSync();
-  }, [fetchProjects, fetchAllRepos, syncProjects]);
+  }, [fetchProjects, fetchAllRepos, fetchGithubStats, syncProjects]);
 
   useEffect(() => {
     const config = portfolioConfigService.getConfig();
@@ -183,9 +197,11 @@ export const useGitHubProjects = () => {
     loading,
     error,
     lastSync,
+    githubStats,
     
     fetchProjects,
     fetchAllRepos,
+    fetchGithubStats,
     addRepository,
     removeRepository,
     toggleFeatured,
