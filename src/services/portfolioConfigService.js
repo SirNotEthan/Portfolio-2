@@ -96,12 +96,52 @@ class PortfolioConfigService {
 
   getFeaturedRepos() {
     const config = this.getConfig();
-    return config ? config.featuredRepos : [];
+    let featuredRepos = config ? config.featuredRepos : [];
+    
+    // Check for compressed URL config first
+    const urlConfig = this.parseUrlConfig();
+    if (urlConfig && urlConfig.featuredRepos.length > 0) {
+      return urlConfig.featuredRepos;
+    }
+    
+    // Fallback to legacy URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const featuredParam = urlParams.get('featured');
+    
+    if (featuredParam) {
+      const urlFeatured = featuredParam.split(',');
+      featuredRepos = [...new Set([...featuredRepos, ...urlFeatured])];
+    }
+    
+    return featuredRepos;
   }
 
   getHiddenRepos() {
     const config = this.getConfig();
-    return config ? config.hiddenRepos : [];
+    let hiddenRepos = config ? config.hiddenRepos : [];
+    
+    // Check for compressed URL config first
+    const urlConfig = this.parseUrlConfig();
+    if (urlConfig && urlConfig.hiddenRepos.length > 0) {
+      return urlConfig.hiddenRepos;
+    }
+    
+    // Fallback to legacy URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const showParam = urlParams.get('show');
+    const hideParam = urlParams.get('hide');
+    
+    if (showParam) {
+      const showRepos = showParam.split(',');
+      hiddenRepos = hiddenRepos.filter(repo => !showRepos.includes(repo));
+    }
+    
+    if (hideParam) {
+      const hideRepos = hideParam.split(',');
+      hiddenRepos = [...new Set([...hiddenRepos, ...hideRepos])];
+    }
+    
+    return hiddenRepos;
   }
 
   shouldAutoSync() {
@@ -162,12 +202,154 @@ class PortfolioConfigService {
 
   getEnabledCategories() {
     const config = this.getConfig();
-    return config ? Object.keys(config.categories).filter(cat => config.categories[cat]) : [];
+    let enabledCategories = config ? Object.keys(config.categories).filter(cat => config.categories[cat]) : [];
+    
+    // Check for compressed URL config override
+    const urlConfig = this.parseUrlConfig();
+    if (urlConfig && urlConfig.enabledCategories.length > 0) {
+      return urlConfig.enabledCategories;
+    }
+    
+    return enabledCategories;
   }
 
   exportConfig() {
     const config = this.getConfig();
     return JSON.stringify(config, null, 2);
+  }
+
+  generateSyncUrl(baseUrl = window.location.origin) {
+    const config = this.getConfig();
+    if (!config) return baseUrl;
+
+    // Create compressed config object
+    const compressedConfig = {
+      h: config.hiddenRepos || [],
+      f: config.featuredRepos || [],
+      c: Object.keys(config.categories || {}).filter(cat => config.categories[cat])
+    };
+
+    // Remove empty arrays to save space
+    Object.keys(compressedConfig).forEach(key => {
+      if (Array.isArray(compressedConfig[key]) && compressedConfig[key].length === 0) {
+        delete compressedConfig[key];
+      }
+    });
+
+    if (Object.keys(compressedConfig).length === 0) {
+      return baseUrl;
+    }
+
+    // Check for common presets first
+    const preset = this.getPresetForConfig(compressedConfig);
+    if (preset) {
+      return `${baseUrl}?preset=${preset}`;
+    }
+
+    // Compress and encode
+    const configString = JSON.stringify(compressedConfig);
+    const base64Config = btoa(configString).replace(/[+/=]/g, (m) => ({'+': '-', '/': '_', '=': ''}[m]));
+    
+    return `${baseUrl}?config=${base64Config}`;
+  }
+
+  getPresetForConfig(compressedConfig) {
+    const presets = {
+      'all': { c: ['Web Development', 'Game Development', '3D Modeling', 'Mobile Development'] },
+      'web': { c: ['Web Development'] },
+      'games': { c: ['Game Development'] },
+      'mobile': { c: ['Mobile Development'] },
+      '3d': { c: ['3D Modeling'] },
+      'featured': { f: compressedConfig.f, c: compressedConfig.c },
+    };
+
+    const configStr = JSON.stringify(compressedConfig);
+    for (const [preset, presetConfig] of Object.entries(presets)) {
+      if (preset === 'featured') continue; // Skip dynamic preset
+      if (JSON.stringify(presetConfig) === configStr) {
+        return preset;
+      }
+    }
+
+    // Check if it's just featured repos with all categories
+    if (compressedConfig.f && compressedConfig.f.length > 0 && 
+        JSON.stringify(compressedConfig.c) === JSON.stringify(presets.all.c) &&
+        !compressedConfig.h) {
+      return `f-${this.hashArray(compressedConfig.f)}`;
+    }
+
+    return null;
+  }
+
+  hashArray(arr) {
+    return arr.sort().join(',').split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0);
+      return a & a;
+    }, 0).toString(36).substring(0, 6);
+  }
+
+  parseUrlConfig() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const configParam = urlParams.get('config');
+    const presetParam = urlParams.get('preset');
+    
+    // Handle preset shortcuts
+    if (presetParam) {
+      return this.expandPreset(presetParam);
+    }
+    
+    // Handle compressed config
+    if (configParam) {
+      try {
+        // Decode compressed config
+        const base64 = configParam.replace(/[-_]/g, (m) => ({'-': '+', '_': '/'}[m]));
+        const paddedBase64 = base64 + '='.repeat(4 - base64.length % 4);
+        const configString = atob(paddedBase64);
+        const compressed = JSON.parse(configString);
+        
+        return {
+          hiddenRepos: compressed.h || [],
+          featuredRepos: compressed.f || [],
+          enabledCategories: compressed.c || []
+        };
+      } catch (error) {
+        console.warn('Failed to parse URL config:', error);
+        return null;
+      }
+    }
+    
+    return null;
+  }
+
+  expandPreset(preset) {
+    const presets = {
+      'all': { c: ['Web Development', 'Game Development', '3D Modeling', 'Mobile Development'] },
+      'web': { c: ['Web Development'] },
+      'games': { c: ['Game Development'] },
+      'mobile': { c: ['Mobile Development'] },
+      '3d': { c: ['3D Modeling'] }
+    };
+
+    if (presets[preset]) {
+      return {
+        hiddenRepos: [],
+        featuredRepos: [],
+        enabledCategories: presets[preset].c
+      };
+    }
+
+    // Handle featured repo hash (f-abc123)
+    if (preset.startsWith('f-')) {
+      // This would need the actual repo list to reverse the hash
+      // For now, return all categories with empty featured list
+      return {
+        hiddenRepos: [],
+        featuredRepos: [],
+        enabledCategories: presets.all.c
+      };
+    }
+
+    return null;
   }
 
   importConfig(configJson) {

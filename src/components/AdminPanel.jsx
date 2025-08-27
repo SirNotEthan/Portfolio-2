@@ -97,6 +97,15 @@ function AdminPanel({ isOpen, onClose }) {
     URL.revokeObjectURL(url);
   };
 
+  const handleGenerateSyncUrl = () => {
+    const syncUrl = portfolioConfigService.generateSyncUrl();
+    navigator.clipboard.writeText(syncUrl).then(() => {
+      alert('Sync URL copied to clipboard! Share this URL to sync settings across devices.');
+    }).catch(() => {
+      prompt('Copy this URL to sync settings across devices:', syncUrl);
+    });
+  };
+
   const handleImportConfig = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -539,7 +548,7 @@ function AdminPanel({ isOpen, onClose }) {
                 {/* Export/Import */}
                 <div className="bg-black/30 rounded-lg p-4">
                   <h3 className="text-white font-semibold mb-4">Configuration</h3>
-                  <div className="flex gap-4">
+                  <div className="flex flex-wrap gap-4">
                     <button
                       onClick={handleExportConfig}
                       className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all"
@@ -558,6 +567,13 @@ function AdminPanel({ isOpen, onClose }) {
                       />
                     </label>
                     <button
+                      onClick={handleGenerateSyncUrl}
+                      className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all"
+                    >
+                      <FaGlobe />
+                      Generate Sync URL
+                    </button>
+                    <button
                       onClick={() => {
                         if (confirm('Are you sure you want to reset all configuration?')) {
                           portfolioConfigService.resetConfig();
@@ -570,6 +586,9 @@ function AdminPanel({ isOpen, onClose }) {
                       Reset Config
                     </button>
                   </div>
+                  <p className="text-gray-400 text-sm mt-3">
+                    Use Sync URL to share settings across devices or Export/Import for full backup.
+                  </p>
                 </div>
 
                 {/* Last Sync */}

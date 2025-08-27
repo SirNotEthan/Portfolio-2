@@ -8,41 +8,87 @@ console.log(`GitHub Service: Token ${GITHUB_TOKEN ? 'loaded' : 'missing'} for ${
 class GitHubService {
   constructor() {
     this.cache = new Map();
-    this.cacheTimeout = 5 * 60 * 1000;
+    this.cacheTimeout = 30 * 60 * 1000; // 30 minutes instead of 5
+    this.requestQueue = [];
+    this.isProcessingQueue = false;
   }
 
-  async fetchWithCache(url, cacheKey) {
+  async fetchWithCache(url, cacheKey, retryAttempt = 0) {
     const cached = this.cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
       return cached.data;
     }
 
-    const headers = {};
-    if (GITHUB_TOKEN) {
-      headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
-    }
+    return this.queueRequest(async () => {
+      const headers = {};
+      if (GITHUB_TOKEN) {
+        headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
+      }
 
-    try {
-      const response = await fetch(url, { headers });
-      
-      if (!response.ok) {
-        if (response.status === 403) {
-          const rateLimitReset = response.headers.get('X-RateLimit-Reset');
-          const resetTime = rateLimitReset ? new Date(rateLimitReset * 1000) : null;
-          throw new Error(`GitHub API rate limit exceeded. ${resetTime ? `Resets at ${resetTime.toLocaleTimeString()}` : 'Try again later.'}`);
+      try {
+        const response = await fetch(url, { headers });
+        
+        if (!response.ok) {
+          if (response.status === 403) {
+            const rateLimitReset = response.headers.get('X-RateLimit-Reset');
+            const resetTime = rateLimitReset ? new Date(rateLimitReset * 1000) : null;
+            
+            // Exponential backoff retry for rate limits
+            if (retryAttempt < 3) {
+              const backoffTime = Math.min(1000 * Math.pow(2, retryAttempt), 10000);
+              console.warn(`Rate limit hit, retrying in ${backoffTime}ms...`);
+              await new Promise(resolve => setTimeout(resolve, backoffTime));
+              return this.fetchWithCache(url, cacheKey, retryAttempt + 1);
+            }
+            
+            throw new Error(`GitHub API rate limit exceeded. ${resetTime ? `Resets at ${resetTime.toLocaleTimeString()}` : 'Try again later.'}`);
+          }
+          throw new Error(`GitHub API error: ${response.status}`);
         }
-        throw new Error(`GitHub API error: ${response.status}`);
+
+        const data = await response.json();
+        this.cache.set(cacheKey, { data, timestamp: Date.now() });
+        return data;
+      } catch (error) {
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+          throw new Error('Network error: Unable to connect to GitHub API');
+        }
+        throw error;
+      }
+    });
+  }
+
+  async queueRequest(requestFn) {
+    return new Promise((resolve, reject) => {
+      this.requestQueue.push({ requestFn, resolve, reject });
+      this.processQueue();
+    });
+  }
+
+  async processQueue() {
+    if (this.isProcessingQueue || this.requestQueue.length === 0) {
+      return;
+    }
+
+    this.isProcessingQueue = true;
+
+    while (this.requestQueue.length > 0) {
+      const { requestFn, resolve, reject } = this.requestQueue.shift();
+      
+      try {
+        const result = await requestFn();
+        resolve(result);
+      } catch (error) {
+        reject(error);
       }
 
-      const data = await response.json();
-      this.cache.set(cacheKey, { data, timestamp: Date.now() });
-      return data;
-    } catch (error) {
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        throw new Error('Network error: Unable to connect to GitHub API');
+      // Add small delay between requests to avoid overwhelming the API
+      if (this.requestQueue.length > 0) {
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
-      throw error;
     }
+
+    this.isProcessingQueue = false;
   }
 
   async getUserRepos() {
