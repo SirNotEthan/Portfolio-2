@@ -1,9 +1,12 @@
 import { Link } from 'react-scroll';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaTwitter, FaDiscord, FaReact, FaNodeJs, FaGithub, FaDocker, FaCss3, FaExternalLinkAlt, FaCode, FaRocket, FaLightbulb, FaGamepad, FaCube, FaFilter, FaStar, FaEye } from 'react-icons/fa';
+import { FaTwitter, FaDiscord, FaReact, FaNodeJs, FaGithub, FaDocker, FaCss3, FaExternalLinkAlt, FaCode, FaRocket, FaLightbulb, FaGamepad, FaCube, FaFilter, FaStar, FaEye, FaCog } from 'react-icons/fa';
 import { SiTailwindcss, SiPostgresql, SiJavascript, SiTypescript, SiHtml5, SiMongodb, SiDiscord, SiLua, SiBlender, SiRoblox } from 'react-icons/si';
 import { HiMenu, HiX } from 'react-icons/hi';
+import { useGitHubProjects } from '../hooks/useGitHubProjects';
+import AdminPanel from '../components/AdminPanel';
+import authService from '../services/authService';
 
 function LandingPage() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -16,6 +19,17 @@ function LandingPage() {
     const [githubStats, setGithubStats] = useState(null);
     const [currentSection, setCurrentSection] = useState(0);
     const sectionsRef = useRef([]);
+    const [showAdminPanel, setShowAdminPanel] = useState(false);
+    const [showAdminLogin, setShowAdminLogin] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    
+    const {
+        projects: githubProjects,
+        loading: projectsLoading,
+        getFeaturedProjects,
+        getProjectsByCategory,
+        getProjectStats
+    } = useGitHubProjects();
 
     const sections = ['home', 'about', 'skills', 'featured', 'projects', 'contact'];
 
@@ -78,6 +92,38 @@ function LandingPage() {
         return () => window.removeEventListener('keydown', handleKeyPress);
     }, [currentSection, sections.length]);
 
+    useEffect(() => {
+        setIsAuthenticated(authService.isAuthenticated());
+    }, []);
+
+    const handleAdminAccess = () => {
+        if (authService.isAuthenticated()) {
+            setShowAdminPanel(true);
+        } else {
+            setShowAdminLogin(true);
+        }
+    };
+
+    const handleAdminLogin = (password) => {
+        // Simple password check - in production, this should be more secure
+        const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD
+        
+        if (password === ADMIN_PASSWORD) {
+            sessionStorage.setItem('portfolio_admin_auth', 'true');
+            sessionStorage.setIte
+            m('portfolio_admin_auth_time', Date.now().toString());
+            
+            setIsAuthenticated(true);
+            setShowAdminLogin(false);
+            setShowAdminPanel(true);
+            authService.logAccessAttempt(true);
+        } else {
+            authService.logAccessAttempt(false);
+            alert('Invalid password');
+        }
+    };
+
+
     const skills = [
         { name: 'React', icon: <FaReact className="text-blue-400 text-6xl" />, category: 'Frontend', glow: 'glow-effect' },
         { name: 'Node.js', icon: <FaNodeJs className="text-green-400 text-6xl" />, category: 'Backend', glow: 'glow-effect' },
@@ -97,179 +143,19 @@ function LandingPage() {
         { name: 'Game Design', icon: <FaGamepad className="text-purple-400 text-6xl" />, category: 'Game Dev', glow: 'glow-effect-purple' },
     ];
 
-    const projects = [
-        // Web Development Projects
+    const projects = githubProjects.length > 0 ? githubProjects : [
         {
-            id: 1,
-            name: "TER (The Empyreal Realm)",
-            description: "A comprehensive Discord bot and web dashboard for The Empyreal Realm gaming community.",
-            longDescription: "Full-stack application featuring Discord bot integration, user management, game statistics tracking, and real-time community features. Built with modern JavaScript and Node.js architecture.",
-            images: [
-                "https://images.ctfassets.net/ihx0a8chifpc/GTlzd4xkx4LmWsG1Kw1BB/ad1834111245e6ee1da4372f1eb5876c/placeholder.com-1280x720.png?w=1920&q=60&fm=webp",
-                "https://images.ctfassets.net/ihx0a8chifpc/GTlzd4xkx4LmWsG1Kw1BB/ad1834111245e6ee1da4372f1eb5876c/placeholder.com-1280x720.png?w=1920&q=60&fm=webp"
-            ],
-            technologies: ['JavaScript', 'Node.js', 'Discord.js', 'MongoDB', 'Express'],
+            id: 'fallback-1',
+            name: "GitHub Integration Loading...",
+            description: "Loading projects from GitHub...",
+            longDescription: "Your projects will be loaded automatically from your GitHub repositories.",
+            images: ["https://via.placeholder.com/1280x720/4ECDC4/FFFFFF?text=Loading"],
+            technologies: ['GitHub API', 'React'],
             link: "#",
-            githubLink: "https://github.com/SirNotEthan/TER",
-            status: 'Completed',
+            githubLink: "https://github.com/SirNotEthan",
+            status: 'Loading',
             category: 'Web Development',
-            featured: true
-        },
-        {
-            id: 2,
-            name: "Discord.js Bot Template",
-            description: "Professional Discord bot template with modern architecture and best practices.",
-            longDescription: "A comprehensive template for creating Discord bots with command handling, event management, database integration, and modular structure. Perfect starting point for any Discord bot project.",
-            images: [
-                "https://images.ctfassets.net/ihx0a8chifpc/GTlzd4xkx4LmWsG1Kw1BB/ad1834111245e6ee1da4372f1eb5876c/placeholder.com-1280x720.png?w=1920&q=60&fm=webp"
-            ],
-            technologies: ['JavaScript', 'Discord.js', 'Node.js', 'SQLite'],
-            link: "#",
-            githubLink: "https://github.com/SirNotEthan/DiscordJs_Template",
-            status: 'Completed',
-            category: 'Web Development'
-        },
-        {
-            id: 3,
-            name: "BitLab Dashboard",
-            description: "Enterprise-level dashboard for BitLab community management and analytics.",
-            longDescription: "Comprehensive platform for managing Discord communities, tracking user engagement, moderating content, and analyzing community growth metrics with real-time updates.",
-            images: [
-                "https://images.ctfassets.net/ihx0a8chifpc/GTlzd4xkx4LmWsG1Kw1BB/ad1834111245e6ee1da4372f1eb5876c/placeholder.com-1280x720.png?w=1920&q=60&fm=webp",
-                "https://images.ctfassets.net/ihx0a8chifpc/GTlzd4xkx4LmWsG1Kw1BB/ad1834111245e6ee1da4372f1eb5876c/placeholder.com-1280x720.png?w=1920&q=60&fm=webp",
-                "https://images.ctfassets.net/ihx0a8chifpc/GTlzd4xkx4LmWsG1Kw1BB/ad1834111245e6ee1da4372f1eb5876c/placeholder.com-1280x720.png?w=1920&q=60&fm=webp"
-            ],
-            technologies: ['React', 'Node.js', 'MongoDB', 'TailwindCSS', 'Discord.js'],
-            link: "#",
-            githubLink: "#",
-            status: 'Completed',
-            category: 'Web Development',
-            featured: true
-        },
-        {
-            id: 4,
-            name: "TestBotOne",
-            description: "Experimental Discord bot for testing new features and API implementations.",
-            longDescription: "Development and testing environment for Discord bot features, API integrations, and experimental functionality before deploying to production bots.",
-            images: [
-                "https://images.ctfassets.net/ihx0a8chifpc/GTlzd4xkx4LmWsG1Kw1BB/ad1834111245e6ee1da4372f1eb5876c/placeholder.com-1280x720.png?w=1920&q=60&fm=webp"
-            ],
-            technologies: ['JavaScript', 'Discord.js', 'Node.js'],
-            link: "#",
-            githubLink: "https://github.com/SirNotEthan/TestBotOne",
-            status: 'In Progress',
-            category: 'Web Development'
-        },
-
-        // Roblox Development Projects
-        {
-            id: 5,
-            name: "HD-Example Roblox Game",
-            description: "High-definition Roblox experience with advanced scripting and gameplay mechanics.",
-            longDescription: "A showcase Roblox game demonstrating advanced Lua scripting, realistic graphics, complex game mechanics, and multiplayer functionality. Features custom UI, advanced lighting, and optimized performance.",
-            images: [
-                "https://images.ctfassets.net/ihx0a8chifpc/GTlzd4xkx4LmWsG1Kw1BB/ad1834111245e6ee1da4372f1eb5876c/placeholder.com-1280x720.png?w=1920&q=60&fm=webp",
-                "https://images.ctfassets.net/ihx0a8chifpc/GTlzd4xkx4LmWsG1Kw1BB/ad1834111245e6ee1da4372f1eb5876c/placeholder.com-1280x720.png?w=1920&q=60&fm=webp"
-            ],
-            technologies: ['Lua', 'Roblox Studio', 'ReplicatedStorage', 'RemoteEvents'],
-            link: "https://www.roblox.com/games/placeholder",
-            githubLink: "https://github.com/SirNotEthan/HD-Example",
-            status: 'Completed',
-            category: 'Game Development',
-            featured: true
-        },
-        {
-            id: 6,
-            name: "Roblox Simulator Framework",
-            description: "Comprehensive framework for creating simulator-style games on Roblox.",
-            longDescription: "Modular framework providing data persistence, upgrade systems, rebirth mechanics, and monetization features for Roblox simulator games. Includes admin commands and anti-exploit measures.",
-            images: [
-                "https://images.ctfassets.net/ihx0a8chifpc/GTlzd4xkx4LmWsG1Kw1BB/ad1834111245e6ee1da4372f1eb5876c/placeholder.com-1280x720.png?w=1920&q=60&fm=webp"
-            ],
-            technologies: ['Lua', 'Roblox Studio', 'DataStore2', 'ProfileService'],
-            link: "https://www.roblox.com/games/placeholder",
-            githubLink: "#",
-            status: 'In Progress',
-            category: 'Game Development'
-        },
-        {
-            id: 7,
-            name: "RPG Adventure Game",
-            description: "Immersive RPG experience with quest systems, combat mechanics, and character progression.",
-            longDescription: "Full-featured RPG game with custom combat system, inventory management, quest tracking, NPC interactions, and character customization. Features multiple zones and boss battles.",
-            images: [
-                "https://images.ctfassets.net/ihx0a8chifpc/GTlzd4xkx4LmWsG1Kw1BB/ad1834111245e6ee1da4372f1eb5876c/placeholder.com-1280x720.png?w=1920&q=60&fm=webp",
-                "https://images.ctfassets.net/ihx0a8chifpc/GTlzd4xkx4LmWsG1Kw1BB/ad1834111245e6ee1da4372f1eb5876c/placeholder.com-1280x720.png?w=1920&q=60&fm=webp"
-            ],
-            technologies: ['Lua', 'Roblox Studio', 'TweenService', 'HttpService'],
-            link: "https://www.roblox.com/games/placeholder",
-            githubLink: "#",
-            status: 'Completed',
-            category: 'Game Development'
-        },
-
-        // 3D Modeling & Blender Projects
-        {
-            id: 8,
-            name: "Sci-Fi Environment Pack",
-            description: "Collection of high-quality sci-fi 3D models and environments for games and visualization.",
-            longDescription: "Comprehensive pack of futuristic buildings, vehicles, weapons, and environmental assets. Features PBR texturing, optimized geometry, and multiple LOD levels for game engines.",
-            images: [
-                "https://images.ctfassets.net/ihx0a8chifpc/GTlzd4xkx4LmWsG1Kw1BB/ad1834111245e6ee1da4372f1eb5876c/placeholder.com-1280x720.png?w=1920&q=60&fm=webp",
-                "https://images.ctfassets.net/ihx0a8chifpc/GTlzd4xkx4LmWsG1Kw1BB/ad1834111245e6ee1da4372f1eb5876c/placeholder.com-1280x720.png?w=1920&q=60&fm=webp",
-                "https://images.ctfassets.net/ihx0a8chifpc/GTlzd4xkx4LmWsG1Kw1BB/ad1834111245e6ee1da4372f1eb5876c/placeholder.com-1280x720.png?w=1920&q=60&fm=webp"
-            ],
-            technologies: ['Blender', 'Substance Painter', 'UV Mapping', 'PBR Texturing'],
-            link: "#",
-            githubLink: "#",
-            status: 'Completed',
-            category: '3D Modeling',
-            featured: true
-        },
-        {
-            id: 9,
-            name: "Character Design Portfolio",
-            description: "Original character designs and 3D models for games and animation.",
-            longDescription: "Collection of unique character designs featuring detailed modeling, rigging, and animation-ready assets. Includes fantasy, modern, and sci-fi character archetypes.",
-            images: [
-                "https://images.ctfassets.net/ihx0a8chifpc/GTlzd4xkx4LmWsG1Kw1BB/ad1834111245e6ee1da4372f1eb5876c/placeholder.com-1280x720.png?w=1920&q=60&fm=webp"
-            ],
-            technologies: ['Blender', 'ZBrush', 'Rigging', 'Animation'],
-            link: "#",
-            githubLink: "#",
-            status: 'Ongoing',
-            category: '3D Modeling'
-        },
-        {
-            id: 10,
-            name: "Architectural Visualization",
-            description: "Photorealistic architectural renders and virtual walkthroughs.",
-            longDescription: "Professional architectural visualization services including interior design, exterior rendering, and virtual reality walkthroughs for real estate and construction projects.",
-            images: [
-                "https://images.ctfassets.net/ihx0a8chifpc/GTlzd4xkx4LmWsG1Kw1BB/ad1834111245e6ee1da4372f1eb5876c/placeholder.com-1280x720.png?w=1920&q=60&fm=webp",
-                "https://images.ctfassets.net/ihx0a8chifpc/GTlzd4xkx4LmWsG1Kw1BB/ad1834111245e6ee1da4372f1eb5876c/placeholder.com-1280x720.png?w=1920&q=60&fm=webp"
-            ],
-            technologies: ['Blender', 'Cycles Rendering', 'HDRI Lighting', 'Post-Processing'],
-            link: "#",
-            githubLink: "#",
-            status: 'Completed',
-            category: '3D Modeling'
-        },
-
-        // Portfolio & Showcase
-        {
-            id: 11,
-            name: "Interactive Portfolio Website",
-            description: "Modern, responsive portfolio with dark theme and smooth animations.",
-            longDescription: "Personal portfolio website built with React, featuring advanced animations, dark theme design, project showcases, and responsive layout. Optimized for performance and accessibility.",
-            images: [
-                "https://images.ctfassets.net/ihx0a8chifpc/GTlzd4xkx4LmWsG1Kw1BB/ad1834111245e6ee1da4372f1eb5876c/placeholder.com-1280x720.png?w=1920&q=60&fm=webp"
-            ],
-            technologies: ['React', 'Framer Motion', 'TailwindCSS', 'Vite'],
-            link: "#",
-            githubLink: "#",
-            status: 'Completed',
-            category: 'Web Development'
+            featured: false
         }
     ];
 
@@ -280,6 +166,7 @@ function LandingPage() {
         : projects.filter(project => project.category === selectedCategory);
 
     const featuredProjects = projects.filter(project => project.featured);
+    const projectStats = getProjectStats();
 
     const [formData, setFormData] = useState({
         name: "",
@@ -372,7 +259,7 @@ function LandingPage() {
                         </motion.h1>
 
                         {/* Desktop Navigation */}
-                        <nav className="hidden md:flex space-x-6">
+                        <nav className="hidden md:flex space-x-6 items-center">
                             {sections.map((item, index) => (
                                 <button
                                     key={item}
@@ -385,6 +272,13 @@ function LandingPage() {
                                     <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-400 transition-all group-hover:w-full" />
                                 </button>
                             ))}
+                            <button
+                                onClick={handleAdminAccess}
+                                className="text-gray-400 hover:text-blue-400 text-xl transition-all transform hover:scale-110"
+                                title="Admin Panel"
+                            >
+                                <FaCog />
+                            </button>
                         </nav>
 
                         {/* Mobile Menu Button */}
@@ -417,6 +311,15 @@ function LandingPage() {
                                         {item.charAt(0).toUpperCase() + item.slice(1)}
                                     </button>
                                 ))}
+                                <button
+                                    onClick={() => {
+                                        handleAdminAccess();
+                                        setIsMenuOpen(false);
+                                    }}
+                                    className="flex items-center gap-2 text-gray-300 hover:text-blue-400 py-2 transition-colors cursor-pointer w-full text-left"
+                                >
+                                    <FaCog /> Admin Panel
+                                </button>
                             </motion.nav>
                         )}
                     </AnimatePresence>
@@ -781,18 +684,18 @@ function LandingPage() {
                         <div className="grid md:grid-cols-4 gap-6 text-center">
                             <div>
                                 <FaGithub className="text-4xl text-gray-300 mx-auto mb-2" />
-                                <h3 className="text-2xl font-bold text-white">{projects.length}</h3>
+                                <h3 className="text-2xl font-bold text-white">{projectStats.total || projects.length}</h3>
                                 <p className="text-gray-400">Total Projects</p>
                             </div>
                             <div>
-                                <FaCode className="text-4xl text-blue-400 mx-auto mb-2" />
-                                <h3 className="text-2xl font-bold text-white">5+</h3>
-                                <p className="text-gray-400">Languages</p>
+                                <FaStar className="text-4xl text-yellow-400 mx-auto mb-2" />
+                                <h3 className="text-2xl font-bold text-white">{projectStats.totalStars || 0}</h3>
+                                <p className="text-gray-400">GitHub Stars</p>
                             </div>
                             <div>
-                                <FaRocket className="text-4xl text-green-400 mx-auto mb-2" />
-                                <h3 className="text-2xl font-bold text-white">{projects.filter(p => p.status === 'Completed').length}</h3>
-                                <p className="text-gray-400">Completed</p>
+                                <FaCode className="text-4xl text-blue-400 mx-auto mb-2" />
+                                <h3 className="text-2xl font-bold text-white">{projectStats.languages?.length || '5+'}</h3>
+                                <p className="text-gray-400">Languages</p>
                             </div>
                             <div>
                                 <FaEye className="text-4xl text-purple-400 mx-auto mb-2" />
@@ -800,6 +703,11 @@ function LandingPage() {
                                 <p className="text-gray-400">Featured</p>
                             </div>
                         </div>
+                        {projectsLoading && (
+                            <div className="text-center mt-4">
+                                <div className="text-blue-400 animate-pulse">Loading projects from GitHub...</div>
+                            </div>
+                        )}
                     </motion.div>
 
                     {/* Projects Grid */}
@@ -1036,6 +944,79 @@ function LandingPage() {
                     <span className="text-xl">→</span>
                 </button>
             )}
+
+            {/* Admin Login Modal */}
+            <AnimatePresence>
+                {showAdminLogin && (
+                    <motion.div
+                        className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <motion.div
+                            className="bg-card-gradient rounded-xl p-8 w-full max-w-md"
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                        >
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                                    <FaCog className="text-blue-400" />
+                                    Admin Access
+                                </h2>
+                                <button
+                                    onClick={() => setShowAdminLogin(false)}
+                                    className="text-gray-400 hover:text-white text-xl"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                            <form
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    const password = e.target.password.value;
+                                    handleAdminLogin(password);
+                                }}
+                                className="space-y-4"
+                            >
+                                <div>
+                                    <label className="block text-gray-300 font-semibold mb-2">
+                                        Admin Password
+                                    </label>
+                                    <input
+                                        type="password"
+                                        name="password"
+                                        placeholder="Enter admin password"
+                                        className="w-full px-4 py-3 bg-black/50 text-white border border-gray-600 rounded-lg focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all"
+                                        required
+                                        autoFocus
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all glow-effect transform hover:scale-105"
+                                >
+                                    Access Admin Panel
+                                </button>
+                            </form>
+                            <p className="text-gray-400 text-sm mt-4 text-center">
+                                Authorized personnel only
+                            </p>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Admin Panel */}
+            <AnimatePresence>
+                {showAdminPanel && isAuthenticated && (
+                    <AdminPanel 
+                        isOpen={showAdminPanel} 
+                        onClose={() => setShowAdminPanel(false)} 
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 }

@@ -19,7 +19,6 @@
     overflow-y: hidden;
   }
 
-  /* Horizontal Scrolling Container */
   .horizontal-container {
     display: flex;
     height: 100vh;
@@ -47,7 +46,6 @@
   }
 
 
-  /* Custom scrollbar for horizontal */
   .horizontal-container::-webkit-scrollbar {
     height: 8px;
     width: 8px;
@@ -66,7 +64,6 @@
     background: #525252;
   }
 
-  /* Mobile optimizations */
   @media (max-width: 768px) {
     .horizontal-container {
       scroll-snap-type: x mandatory;
@@ -78,7 +75,6 @@
     }
   }
 
-  /* Enhanced smooth scrolling */
   .horizontal-container {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
