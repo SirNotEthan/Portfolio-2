@@ -33,8 +33,9 @@ export const useGitHubProjects = () => {
       const allProjects = [...githubProjects, ...customProjects];
       
       const enabledCategories = portfolioConfigService.getEnabledCategories();
+      const hiddenRepos = portfolioConfigService.getHiddenRepos();
       const filteredProjects = allProjects.filter(project => 
-        enabledCategories.includes(project.category)
+        enabledCategories.includes(project.category) && !hiddenRepos.includes(project.name)
       );
 
       setProjects(filteredProjects);
