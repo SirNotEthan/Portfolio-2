@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FaGithub, FaStar, FaEye, FaEyeSlash, FaCog, FaSync, FaPlus, 
-  FaTrash, FaDownload, FaUpload, FaCheck, FaTimes, FaFilter,
-  FaCode, FaGamepad, FaCube, FaMobile, FaRocket, FaExclamationTriangle,
-  FaSignOutAlt, FaClock, FaCodeBranch, FaUsers, FaChartLine,
+import { motion } from 'framer-motion';
+
+const MotionDiv = motion.div;
+
+import {
+  FaGithub, FaStar, FaEye, FaEyeSlash, FaCog, FaSync, FaPlus,
+  FaTrash, FaDownload, FaUpload, FaTimes,
+  FaCode, FaRocket, FaExclamationTriangle,
+  FaSignOutAlt, FaClock, FaChartLine,
   FaCalendarAlt, FaMapMarkerAlt, FaBriefcase, FaGlobe
 } from 'react-icons/fa';
 import { useGitHubProjects } from '../hooks/useGitHubProjects';
@@ -13,7 +16,6 @@ import authService from '../services/authService';
 
 function AdminPanel({ isOpen, onClose }) {
   const {
-    projects,
     allRepos,
     newRepos,
     loading,
@@ -50,10 +52,10 @@ function AdminPanel({ isOpen, onClose }) {
     const updateSessionTime = () => {
       setSessionTime(authService.formatRemainingTime());
     };
-    
+
     updateSessionTime();
     const interval = setInterval(updateSessionTime, 60000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -68,7 +70,7 @@ function AdminPanel({ isOpen, onClose }) {
   const filteredRepos = allRepos.filter(repo => {
     const matchesSearch = repo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (repo.description && repo.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = categoryFilter === 'All' || 
+    const matchesCategory = categoryFilter === 'All' ||
                            (repo.language && repo.language.includes(categoryFilter));
     return matchesSearch && matchesCategory;
   });
@@ -80,7 +82,7 @@ function AdminPanel({ isOpen, onClose }) {
       includeTopLanguages: ['JavaScript', 'TypeScript', 'Python', 'Lua'],
       maxRepos: 15
     };
-    
+
     await autoSelectRepos(criteria);
   };
 
@@ -100,9 +102,9 @@ function AdminPanel({ isOpen, onClose }) {
   const handleGenerateSyncUrl = () => {
     const syncUrl = portfolioConfigService.generateSyncUrl();
     navigator.clipboard.writeText(syncUrl).then(() => {
-      alert('Sync URL copied to clipboard! Share this URL to sync settings across devices.');
+      alert('Sync URL copied to clipboard!');
     }).catch(() => {
-      prompt('Copy this URL to sync settings across devices:', syncUrl);
+      prompt('Copy this URL:', syncUrl);
     });
   };
 
@@ -125,120 +127,99 @@ function AdminPanel({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <motion.div
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+    <MotionDiv
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(4px)' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <motion.div
-        className="bg-card-gradient rounded-xl w-full max-w-6xl h-[90vh] overflow-hidden flex flex-col"
-        initial={{ scale: 0.9, opacity: 0 }}
+      <MotionDiv
+        className="w-full max-w-6xl h-[90vh] overflow-hidden flex flex-col rounded-sm"
+        style={{ background: 'var(--terminal-bg)', border: '1px solid var(--terminal-border)' }}
+        initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
+        exit={{ scale: 0.95, opacity: 0 }}
       >
         {/* Header */}
-        <div className="border-b border-gray-700 p-6 flex-shrink-0">
+        <div className="p-4 flex-shrink-0" style={{ borderBottom: '1px solid var(--terminal-border)' }}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <FaCog className="text-blue-400 text-2xl" />
-              <h2 className="text-2xl font-bold text-white">Portfolio Admin</h2>
+            <div className="flex items-center gap-2 text-sm">
+              <span style={{ color: 'var(--terminal-amber)' }}>$</span>
+              <span style={{ color: 'var(--terminal-fg)' }} className="font-bold">admin-panel</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 text-sm text-gray-400">
+              <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--terminal-comment)' }}>
                 <FaClock />
                 <span>Session: {sessionTime}</span>
               </div>
               <button
                 onClick={syncProjects}
                 disabled={loading}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all disabled:opacity-50"
+                className="flex items-center gap-1 px-3 py-1 text-xs rounded-sm transition-all disabled:opacity-50 cursor-pointer"
+                style={{ background: 'var(--terminal-amber)', color: '#000' }}
               >
                 <FaSync className={loading ? 'animate-spin' : ''} />
-                Sync
+                sync
               </button>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all"
-                title="Logout"
+                className="flex items-center gap-1 px-3 py-1 text-xs rounded-sm transition-all cursor-pointer"
+                style={{ background: 'var(--terminal-red)', color: '#fff' }}
               >
                 <FaSignOutAlt />
-                Logout
+                logout
               </button>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-white text-2xl transition-colors"
+                className="text-lg transition-colors cursor-pointer hover:opacity-80"
+                style={{ color: 'var(--terminal-comment)' }}
               >
                 <FaTimes />
               </button>
             </div>
           </div>
-          
+
           {/* Stats */}
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mt-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-400">{stats.total}</div>
-              <div className="text-sm text-gray-400">Projects</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-400">{stats.featured}</div>
-              <div className="text-sm text-gray-400">Featured</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-400">{githubStats?.totalStars || stats.totalStars || 0}</div>
-              <div className="text-sm text-gray-400">Total Stars</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-400">{githubStats?.totalForks || stats.totalForks || 0}</div>
-              <div className="text-sm text-gray-400">Total Forks</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-cyan-400">{allRepos.length}</div>
-              <div className="text-sm text-gray-400">All Repos</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-red-400">{newRepos.length}</div>
-              <div className="text-sm text-gray-400">New Repos</div>
-            </div>
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mt-3 text-center text-xs">
+            <div><div className="text-lg font-bold" style={{ color: 'var(--terminal-amber)' }}>{stats.total}</div><div style={{ color: 'var(--terminal-comment)' }}>Projects</div></div>
+            <div><div className="text-lg font-bold" style={{ color: 'var(--terminal-yellow)' }}>{stats.featured}</div><div style={{ color: 'var(--terminal-comment)' }}>Featured</div></div>
+            <div><div className="text-lg font-bold" style={{ color: 'var(--terminal-green)' }}>{githubStats?.totalStars || stats.totalStars || 0}</div><div style={{ color: 'var(--terminal-comment)' }}>Stars</div></div>
+            <div><div className="text-lg font-bold" style={{ color: 'var(--terminal-purple)' }}>{githubStats?.totalForks || stats.totalForks || 0}</div><div style={{ color: 'var(--terminal-comment)' }}>Forks</div></div>
+            <div><div className="text-lg font-bold" style={{ color: 'var(--terminal-cyan)' }}>{allRepos.length}</div><div style={{ color: 'var(--terminal-comment)' }}>All Repos</div></div>
+            <div><div className="text-lg font-bold" style={{ color: 'var(--terminal-red)' }}>{newRepos.length}</div><div style={{ color: 'var(--terminal-comment)' }}>New</div></div>
           </div>
         </div>
 
         {/* New Repos Alert */}
         {showNewReposAlert && newRepos.length > 0 && (
-          <div className="bg-yellow-500/10 border border-yellow-500/30 p-4 m-4 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FaExclamationTriangle className="text-yellow-400" />
-                <span className="text-white">
-                  {newRepos.length} new repositories detected!
-                </span>
+          <div className="p-3 m-3 rounded-sm" style={{ background: 'rgba(255, 176, 0, 0.1)', border: '1px solid rgba(255, 176, 0, 0.3)' }}>
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <FaExclamationTriangle style={{ color: 'var(--terminal-amber)' }} />
+                <span style={{ color: 'var(--terminal-fg)' }}>{newRepos.length} new repositories detected</span>
               </div>
-              <button
-                onClick={() => setShowNewReposAlert(false)}
-                className="text-gray-400 hover:text-white"
-              >
-                <FaTimes />
-              </button>
+              <button onClick={() => setShowNewReposAlert(false)} className="cursor-pointer" style={{ color: 'var(--terminal-comment)' }}><FaTimes /></button>
             </div>
           </div>
         )}
 
         {/* Tabs */}
-        <div className="border-b border-gray-700 flex-shrink-0">
+        <div className="flex-shrink-0" style={{ borderBottom: '1px solid var(--terminal-border)' }}>
           <div className="flex">
             {[
-              { id: 'repos', label: 'Repositories', icon: FaGithub },
-              { id: 'stats', label: 'GitHub Stats', icon: FaChartLine },
-              { id: 'settings', label: 'Settings', icon: FaCog }
+              { id: 'repos', label: 'repos', icon: FaGithub },
+              { id: 'stats', label: 'stats', icon: FaChartLine },
+              { id: 'settings', label: 'settings', icon: FaCog }
             ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors ${
-                  activeTab === tab.id
-                    ? 'text-blue-400 border-b-2 border-blue-400'
-                    : 'text-gray-400 hover:text-white'
-                }`}
+                className="flex items-center gap-2 px-4 py-2 text-sm transition-colors cursor-pointer"
+                style={{
+                  color: activeTab === tab.id ? 'var(--terminal-amber)' : 'var(--terminal-comment)',
+                  borderBottom: activeTab === tab.id ? '2px solid var(--terminal-amber)' : '2px solid transparent'
+                }}
               >
                 <tab.icon />
                 {tab.label}
@@ -252,19 +233,19 @@ function AdminPanel({ isOpen, onClose }) {
           {activeTab === 'repos' && (
             <div className="h-full flex flex-col">
               {/* Controls */}
-              <div className="p-4 border-b border-gray-700 flex-shrink-0">
-                <div className="flex flex-wrap gap-4 items-center">
+              <div className="p-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--terminal-border)' }}>
+                <div className="flex flex-wrap gap-3 items-center">
                   <input
                     type="text"
                     placeholder="Search repositories..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="px-4 py-2 bg-black/50 text-white border border-gray-600 rounded-lg focus:outline-none focus:border-blue-400 flex-1 min-w-[200px]"
+                    className="px-3 py-1.5 terminal-input rounded-sm flex-1 min-w-[200px] text-sm"
                   />
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="px-4 py-2 bg-black/50 text-white border border-gray-600 rounded-lg focus:outline-none focus:border-blue-400"
+                    className="px-3 py-1.5 terminal-input rounded-sm text-sm"
                   >
                     <option value="All">All Languages</option>
                     <option value="JavaScript">JavaScript</option>
@@ -275,22 +256,22 @@ function AdminPanel({ isOpen, onClose }) {
                   </select>
                   <button
                     onClick={handleAutoSelect}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all"
+                    className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-sm transition-all cursor-pointer"
+                    style={{ background: 'var(--terminal-green)', color: '#000' }}
                   >
-                    <FaRocket />
-                    Auto Select
+                    <FaRocket /> auto-select
                   </button>
                 </div>
               </div>
 
               {/* Repository List */}
-              <div className="flex-1 overflow-y-auto p-4 min-h-0" style={{maxHeight: 'calc(90vh - 300px)'}}>
+              <div className="flex-1 overflow-y-auto p-3 min-h-0" style={{maxHeight: 'calc(90vh - 300px)'}}>
                 {loading ? (
-                  <div className="flex items-center justify-center h-32">
-                    <div className="text-gray-400">Loading repositories...</div>
+                  <div className="flex items-center justify-center h-32" style={{ color: 'var(--terminal-comment)' }}>
+                    Loading repositories...
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {filteredRepos.map(repo => {
                       const isSelected = selectedRepos.includes(repo.name);
                       const isFeatured = featuredRepos.includes(repo.name);
@@ -298,90 +279,87 @@ function AdminPanel({ isOpen, onClose }) {
                       const isNew = newRepos.some(newRepo => newRepo.name === repo.name);
 
                       return (
-                        <motion.div
+                        <div
                           key={repo.name}
-                          className={`bg-black/30 rounded-lg p-4 border transition-all ${
-                            isSelected ? 'border-blue-400 bg-blue-500/10' :
-                            isHidden ? 'border-red-400 bg-red-500/10 opacity-50' :
-                            'border-gray-600 hover:border-gray-500'
-                          }`}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
+                          className="p-3 rounded-sm transition-all text-sm"
+                          style={{
+                            background: isSelected ? 'rgba(255, 176, 0, 0.05)' : 'var(--terminal-surface)',
+                            border: `1px solid ${isSelected ? 'var(--terminal-amber)' : isHidden ? 'var(--terminal-red)' : 'var(--terminal-border)'}`,
+                            opacity: isHidden ? 0.5 : 1
+                          }}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <h3 className="text-white font-semibold">{repo.name}</h3>
+                              <div className="flex items-center gap-2 mb-1">
+                                <span style={{ color: 'var(--terminal-fg)' }} className="font-bold">{repo.name}</span>
                                 {isNew && (
-                                  <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full">
-                                    NEW
-                                  </span>
+                                  <span className="px-1.5 py-0.5 text-xs rounded-sm" style={{ background: 'rgba(255, 176, 0, 0.2)', color: 'var(--terminal-amber)' }}>NEW</span>
                                 )}
                                 {isFeatured && (
-                                  <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full flex items-center gap-1">
-                                    <FaStar className="text-xs" /> Featured
+                                  <span className="flex items-center gap-1 px-1.5 py-0.5 text-xs rounded-sm" style={{ background: 'rgba(241, 250, 140, 0.2)', color: 'var(--terminal-yellow)' }}>
+                                    <FaStar className="text-xs" /> featured
                                   </span>
                                 )}
                                 {repo.archived && (
-                                  <span className="px-2 py-1 bg-gray-500/20 text-gray-400 text-xs rounded-full">
-                                    Archived
-                                  </span>
+                                  <span className="px-1.5 py-0.5 text-xs rounded-sm" style={{ background: 'rgba(98, 114, 164, 0.2)', color: 'var(--terminal-comment)' }}>archived</span>
                                 )}
                               </div>
-                              <p className="text-gray-300 text-sm mb-2">
+                              <p className="text-xs mb-1" style={{ color: 'var(--terminal-comment)' }}>
                                 {repo.description || 'No description'}
                               </p>
-                              <div className="flex items-center gap-4 text-sm text-gray-400">
+                              <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--terminal-comment)' }}>
                                 {repo.language && (
                                   <span className="flex items-center gap-1">
-                                    <FaCode /> {repo.language}
+                                    <FaCode style={{ color: 'var(--terminal-purple)' }} /> {repo.language}
                                   </span>
                                 )}
                                 <span className="flex items-center gap-1">
-                                  <FaStar /> {repo.stars}
+                                  <FaStar style={{ color: 'var(--terminal-yellow)' }} /> {repo.stars}
                                 </span>
-                                <span>Updated {new Date(repo.updatedAt).toLocaleDateString()}</span>
+                                <span>{new Date(repo.updatedAt).toLocaleDateString()}</span>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 ml-4">
+                            <div className="flex items-center gap-1 ml-3">
                               <button
                                 onClick={() => isSelected ? removeRepository(repo.name) : addRepository(repo.name)}
-                                className={`p-2 rounded-lg transition-all ${
-                                  isSelected 
-                                    ? 'bg-red-600 hover:bg-red-700 text-white' 
-                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                                }`}
-                                title={isSelected ? 'Remove from portfolio' : 'Add to portfolio'}
+                                className="p-1.5 rounded-sm transition-all cursor-pointer"
+                                style={{
+                                  background: isSelected ? 'var(--terminal-red)' : 'var(--terminal-amber)',
+                                  color: isSelected ? '#fff' : '#000'
+                                }}
+                                title={isSelected ? 'Remove' : 'Add'}
                               >
                                 {isSelected ? <FaTimes /> : <FaPlus />}
                               </button>
                               {isSelected && (
                                 <button
                                   onClick={() => toggleFeatured(repo.name)}
-                                  className={`p-2 rounded-lg transition-all ${
-                                    isFeatured 
-                                      ? 'bg-yellow-600 hover:bg-yellow-700 text-white' 
-                                      : 'bg-gray-600 hover:bg-gray-700 text-white'
-                                  }`}
-                                  title={isFeatured ? 'Remove from featured' : 'Mark as featured'}
+                                  className="p-1.5 rounded-sm transition-all cursor-pointer"
+                                  style={{
+                                    background: isFeatured ? 'var(--terminal-yellow)' : 'var(--terminal-surface)',
+                                    color: isFeatured ? '#000' : 'var(--terminal-comment)',
+                                    border: `1px solid ${isFeatured ? 'var(--terminal-yellow)' : 'var(--terminal-border)'}`
+                                  }}
+                                  title={isFeatured ? 'Unfeature' : 'Feature'}
                                 >
                                   <FaStar />
                                 </button>
                               )}
                               <button
                                 onClick={() => toggleHidden(repo.name)}
-                                className={`p-2 rounded-lg transition-all ${
-                                  isHidden 
-                                    ? 'bg-green-600 hover:bg-green-700 text-white' 
-                                    : 'bg-gray-600 hover:bg-gray-700 text-white'
-                                }`}
-                                title={isHidden ? 'Show repository' : 'Hide repository'}
+                                className="p-1.5 rounded-sm transition-all cursor-pointer"
+                                style={{
+                                  background: isHidden ? 'var(--terminal-green)' : 'var(--terminal-surface)',
+                                  color: isHidden ? '#000' : 'var(--terminal-comment)',
+                                  border: `1px solid ${isHidden ? 'var(--terminal-green)' : 'var(--terminal-border)'}`
+                                }}
+                                title={isHidden ? 'Show' : 'Hide'}
                               >
                                 {isHidden ? <FaEye /> : <FaEyeSlash />}
                               </button>
                             </div>
                           </div>
-                        </motion.div>
+                        </div>
                       );
                     })}
                   </div>
@@ -391,140 +369,74 @@ function AdminPanel({ isOpen, onClose }) {
           )}
 
           {activeTab === 'stats' && (
-            <div className="h-full overflow-y-auto p-6">
-              <div className="space-y-6">
+            <div className="h-full overflow-y-auto p-4">
+              <div className="space-y-4">
                 {githubStats ? (
                   <>
-                    {/* Profile Stats */}
-                    <div className="bg-black/30 rounded-lg p-6">
-                      <div className="flex items-center gap-4 mb-6">
-                        <img 
-                          src={githubStats.avatarUrl} 
-                          alt={githubStats.name || githubStats.username}
-                          className="w-16 h-16 rounded-full"
-                        />
+                    {/* Profile */}
+                    <div className="p-4 rounded-sm" style={{ background: 'var(--terminal-surface)', border: '1px solid var(--terminal-border)' }}>
+                      <div className="flex items-center gap-4 mb-4">
+                        <img src={githubStats.avatarUrl} alt={githubStats.name || githubStats.username} className="w-12 h-12 rounded-sm" />
                         <div>
-                          <h3 className="text-xl font-bold text-white">
-                            {githubStats.name || githubStats.username}
-                          </h3>
-                          <p className="text-gray-400">@{githubStats.username}</p>
-                          {githubStats.bio && (
-                            <p className="text-gray-300 mt-2">{githubStats.bio}</p>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-blue-400">{githubStats.publicRepos}</div>
-                          <div className="text-sm text-gray-400">Public Repos</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-green-400">{githubStats.followers}</div>
-                          <div className="text-sm text-gray-400">Followers</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-purple-400">{githubStats.following}</div>
-                          <div className="text-sm text-gray-400">Following</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-yellow-400">{githubStats.publicGists}</div>
-                          <div className="text-sm text-gray-400">Public Gists</div>
+                          <div className="font-bold" style={{ color: 'var(--terminal-fg)' }}>{githubStats.name || githubStats.username}</div>
+                          <div className="text-xs" style={{ color: 'var(--terminal-comment)' }}>@{githubStats.username}</div>
+                          {githubStats.bio && <div className="text-xs mt-1" style={{ color: 'var(--terminal-fg)' }}>{githubStats.bio}</div>}
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap gap-4 text-sm text-gray-400">
-                        {githubStats.company && (
-                          <div className="flex items-center gap-2">
-                            <FaBriefcase />
-                            <span>{githubStats.company}</span>
-                          </div>
-                        )}
-                        {githubStats.location && (
-                          <div className="flex items-center gap-2">
-                            <FaMapMarkerAlt />
-                            <span>{githubStats.location}</span>
-                          </div>
-                        )}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 text-center text-xs">
+                        <div><div className="text-lg font-bold" style={{ color: 'var(--terminal-amber)' }}>{githubStats.publicRepos}</div><div style={{ color: 'var(--terminal-comment)' }}>Repos</div></div>
+                        <div><div className="text-lg font-bold" style={{ color: 'var(--terminal-green)' }}>{githubStats.followers}</div><div style={{ color: 'var(--terminal-comment)' }}>Followers</div></div>
+                        <div><div className="text-lg font-bold" style={{ color: 'var(--terminal-purple)' }}>{githubStats.following}</div><div style={{ color: 'var(--terminal-comment)' }}>Following</div></div>
+                        <div><div className="text-lg font-bold" style={{ color: 'var(--terminal-yellow)' }}>{githubStats.publicGists}</div><div style={{ color: 'var(--terminal-comment)' }}>Gists</div></div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-3 text-xs" style={{ color: 'var(--terminal-comment)' }}>
+                        {githubStats.company && <div className="flex items-center gap-1"><FaBriefcase /> {githubStats.company}</div>}
+                        {githubStats.location && <div className="flex items-center gap-1"><FaMapMarkerAlt /> {githubStats.location}</div>}
                         {githubStats.blog && (
-                          <div className="flex items-center gap-2">
-                            <FaGlobe />
-                            <a href={githubStats.blog} target="_blank" rel="noopener noreferrer" 
-                               className="hover:text-blue-400 transition-colors">
-                              {githubStats.blog}
-                            </a>
-                          </div>
+                          <a href={githubStats.blog} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:opacity-80" style={{ color: 'var(--terminal-cyan)' }}>
+                            <FaGlobe /> {githubStats.blog}
+                          </a>
                         )}
-                        <div className="flex items-center gap-2">
-                          <FaCalendarAlt />
-                          <span>Joined {new Date(githubStats.createdAt).toLocaleDateString()}</span>
-                        </div>
+                        <div className="flex items-center gap-1"><FaCalendarAlt /> Joined {new Date(githubStats.createdAt).toLocaleDateString()}</div>
                       </div>
                     </div>
 
-                    {/* Repository Stats */}
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div className="bg-black/30 rounded-lg p-6">
-                        <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-                          <FaStar className="text-yellow-400" />
-                          Repository Overview
+                    {/* Stats Grid */}
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="p-4 rounded-sm" style={{ background: 'var(--terminal-surface)', border: '1px solid var(--terminal-border)' }}>
+                        <h3 className="font-bold text-sm mb-3 flex items-center gap-2" style={{ color: 'var(--terminal-amber)' }}>
+                          <FaStar /> Repository Overview
                         </h3>
-                        <div className="space-y-3">
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Total Stars:</span>
-                            <span className="text-green-400 font-semibold">{githubStats.totalStars}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Total Forks:</span>
-                            <span className="text-blue-400 font-semibold">{githubStats.totalForks}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Total Size:</span>
-                            <span className="text-purple-400 font-semibold">{Math.round(githubStats.totalSize / 1024)} MB</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Languages Used:</span>
-                            <span className="text-cyan-400 font-semibold">{githubStats.languages.length}</span>
-                          </div>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between"><span style={{ color: 'var(--terminal-comment)' }}>Total Stars:</span><span style={{ color: 'var(--terminal-yellow)' }}>{githubStats.totalStars}</span></div>
+                          <div className="flex justify-between"><span style={{ color: 'var(--terminal-comment)' }}>Total Forks:</span><span style={{ color: 'var(--terminal-green)' }}>{githubStats.totalForks}</span></div>
+                          <div className="flex justify-between"><span style={{ color: 'var(--terminal-comment)' }}>Total Size:</span><span style={{ color: 'var(--terminal-purple)' }}>{Math.round(githubStats.totalSize / 1024)} MB</span></div>
+                          <div className="flex justify-between"><span style={{ color: 'var(--terminal-comment)' }}>Languages:</span><span style={{ color: 'var(--terminal-cyan)' }}>{githubStats.languages.length}</span></div>
                         </div>
                       </div>
 
-                      <div className="bg-black/30 rounded-lg p-6">
-                        <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-                          <FaChartLine className="text-green-400" />
-                          Recent Activity
+                      <div className="p-4 rounded-sm" style={{ background: 'var(--terminal-surface)', border: '1px solid var(--terminal-border)' }}>
+                        <h3 className="font-bold text-sm mb-3 flex items-center gap-2" style={{ color: 'var(--terminal-green)' }}>
+                          <FaChartLine /> Recent Activity
                         </h3>
-                        <div className="space-y-3">
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Recently Updated (30 days):</span>
-                            <span className="text-green-400 font-semibold">{githubStats.recentActivity.recentlyUpdated}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Active Repos (90 days):</span>
-                            <span className="text-blue-400 font-semibold">{githubStats.recentActivity.activeRepos}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Activity Rate:</span>
-                            <span className="text-purple-400 font-semibold">
-                              {Math.round((githubStats.recentActivity.activeRepos / githubStats.recentActivity.totalRepos) * 100)}%
-                            </span>
-                          </div>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between"><span style={{ color: 'var(--terminal-comment)' }}>Updated (30d):</span><span style={{ color: 'var(--terminal-green)' }}>{githubStats.recentActivity.recentlyUpdated}</span></div>
+                          <div className="flex justify-between"><span style={{ color: 'var(--terminal-comment)' }}>Active (90d):</span><span style={{ color: 'var(--terminal-amber)' }}>{githubStats.recentActivity.activeRepos}</span></div>
+                          <div className="flex justify-between"><span style={{ color: 'var(--terminal-comment)' }}>Rate:</span><span style={{ color: 'var(--terminal-purple)' }}>{Math.round((githubStats.recentActivity.activeRepos / githubStats.recentActivity.totalRepos) * 100)}%</span></div>
                         </div>
                       </div>
                     </div>
 
                     {/* Languages */}
-                    <div className="bg-black/30 rounded-lg p-6">
-                      <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-                        <FaCode className="text-blue-400" />
-                        Programming Languages
+                    <div className="p-4 rounded-sm" style={{ background: 'var(--terminal-surface)', border: '1px solid var(--terminal-border)' }}>
+                      <h3 className="font-bold text-sm mb-3 flex items-center gap-2" style={{ color: 'var(--terminal-cyan)' }}>
+                        <FaCode /> Languages
                       </h3>
                       <div className="flex flex-wrap gap-2">
                         {githubStats.languages.map(language => (
-                          <span
-                            key={language}
-                            className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm"
-                          >
+                          <span key={language} className="px-2 py-0.5 text-xs rounded-sm" style={{ background: 'rgba(255, 176, 0, 0.1)', color: 'var(--terminal-amber)', border: '1px solid rgba(255, 176, 0, 0.2)' }}>
                             {language}
                           </span>
                         ))}
@@ -532,10 +444,9 @@ function AdminPanel({ isOpen, onClose }) {
                     </div>
                   </>
                 ) : (
-                  <div className="bg-black/30 rounded-lg p-8 text-center">
-                    <FaChartLine className="text-gray-400 text-4xl mb-4 mx-auto" />
-                    <h3 className="text-white font-semibold mb-2">Loading GitHub Stats</h3>
-                    <p className="text-gray-400">Fetching your GitHub statistics...</p>
+                  <div className="p-6 text-center rounded-sm" style={{ background: 'var(--terminal-surface)', border: '1px solid var(--terminal-border)' }}>
+                    <FaChartLine className="text-3xl mb-3 mx-auto" style={{ color: 'var(--terminal-comment)' }} />
+                    <div style={{ color: 'var(--terminal-fg)' }}>Loading GitHub Stats...</div>
                   </div>
                 )}
               </div>
@@ -543,77 +454,46 @@ function AdminPanel({ isOpen, onClose }) {
           )}
 
           {activeTab === 'settings' && (
-            <div className="h-full overflow-y-auto p-6">
-              <div className="space-y-6">
-                {/* Export/Import */}
-                <div className="bg-black/30 rounded-lg p-4">
-                  <h3 className="text-white font-semibold mb-4">Configuration</h3>
-                  <div className="flex flex-wrap gap-4">
-                    <button
-                      onClick={handleExportConfig}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all"
-                    >
-                      <FaDownload />
-                      Export Config
+            <div className="h-full overflow-y-auto p-4">
+              <div className="space-y-4">
+                <div className="p-4 rounded-sm" style={{ background: 'var(--terminal-surface)', border: '1px solid var(--terminal-border)' }}>
+                  <h3 className="font-bold text-sm mb-3" style={{ color: 'var(--terminal-fg)' }}>Configuration</h3>
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={handleExportConfig} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-sm cursor-pointer transition-all hover:opacity-80" style={{ background: 'var(--terminal-amber)', color: '#000' }}>
+                      <FaDownload /> export
                     </button>
-                    <label className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all cursor-pointer">
-                      <FaUpload />
-                      Import Config
-                      <input
-                        type="file"
-                        accept=".json"
-                        onChange={handleImportConfig}
-                        className="hidden"
-                      />
+                    <label className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-sm cursor-pointer transition-all hover:opacity-80" style={{ background: 'var(--terminal-green)', color: '#000' }}>
+                      <FaUpload /> import
+                      <input type="file" accept=".json" onChange={handleImportConfig} className="hidden" />
                     </label>
-                    <button
-                      onClick={handleGenerateSyncUrl}
-                      className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all"
-                    >
-                      <FaGlobe />
-                      Generate Sync URL
+                    <button onClick={handleGenerateSyncUrl} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-sm cursor-pointer transition-all hover:opacity-80" style={{ background: 'var(--terminal-purple)', color: '#fff' }}>
+                      <FaGlobe /> sync-url
                     </button>
-                    <button
-                      onClick={() => {
-                        if (confirm('Are you sure you want to reset all configuration?')) {
-                          portfolioConfigService.resetConfig();
-                          syncProjects();
-                        }
-                      }}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all"
-                    >
-                      <FaTrash />
-                      Reset Config
+                    <button onClick={() => { if (confirm('Reset all configuration?')) { portfolioConfigService.resetConfig(); syncProjects(); } }} className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-sm cursor-pointer transition-all hover:opacity-80" style={{ background: 'var(--terminal-red)', color: '#fff' }}>
+                      <FaTrash /> reset
                     </button>
                   </div>
-                  <p className="text-gray-400 text-sm mt-3">
-                    Use Sync URL to share settings across devices or Export/Import for full backup.
-                  </p>
                 </div>
 
-                {/* Last Sync */}
                 {lastSync && (
-                  <div className="bg-black/30 rounded-lg p-4">
-                    <h3 className="text-white font-semibold mb-2">Sync Status</h3>
-                    <p className="text-gray-400">
+                  <div className="p-4 rounded-sm" style={{ background: 'var(--terminal-surface)', border: '1px solid var(--terminal-border)' }}>
+                    <div className="text-sm" style={{ color: 'var(--terminal-comment)' }}>
                       Last synced: {new Date(lastSync).toLocaleString()}
-                    </p>
+                    </div>
                   </div>
                 )}
 
-                {/* Error Display */}
                 {error && (
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
-                    <h3 className="text-red-400 font-semibold mb-2">Error</h3>
-                    <p className="text-red-300">{error}</p>
+                  <div className="p-3 rounded-sm" style={{ background: 'rgba(255, 85, 85, 0.1)', border: '1px solid rgba(255, 85, 85, 0.3)' }}>
+                    <div className="text-sm" style={{ color: 'var(--terminal-red)' }}>Error: {error}</div>
                   </div>
                 )}
               </div>
             </div>
           )}
         </div>
-      </motion.div>
-    </motion.div>
+      </MotionDiv>
+    </MotionDiv>
   );
 }
 
