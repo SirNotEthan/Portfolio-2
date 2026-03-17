@@ -18,9 +18,7 @@ export default function AboutSection({ githubStats }) {
               # About Me
             </h2>
             <p style={{ color: 'var(--terminal-fg)' }}>
-              Passionate developer from the UK, dedicated to creating exceptional
-              digital experiences across web development, game development, and 3D
-              modeling. I love turning complex problems into clean, elegant solutions.
+              Developer based in Warwickshire, UK. I build web apps, games, and 3D systems by breaking messy problems into clean, maintainable solutions. I’ve worked across full-stack web development and game systems where performance and structure actually matter—not just how it looks.
             </p>
           </div>
 

@@ -16,7 +16,7 @@ const PALETTE_COLORS = [
 ];
 
 export default function HeroSection({ githubStats, onNavigate }) {
-  const startYear = 2020;
+  const startYear = 2022;
   const uptime = new Date().getFullYear() - startYear;
 
   return (
@@ -58,7 +58,7 @@ export default function HeroSection({ githubStats, onNavigate }) {
               }
             />
             <InfoLine label="Shell" value="React 19 + Vite 6" />
-            <InfoLine label="Terminal" value="Portfolio v2.0" />
+            <InfoLine label="Terminal" value="Portfolio v3.0" />
 
             {/* Palette */}
             <div className="pt-2 flex gap-1">

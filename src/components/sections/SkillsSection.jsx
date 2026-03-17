@@ -5,7 +5,6 @@ import TerminalOutput from '../terminal/TerminalOutput';
 export default function SkillsSection({ skills }) {
   const [expandedCategories, setExpandedCategories] = useState({});
 
-  // Group skills by category
   const grouped = {};
   skills.forEach((skill) => {
     if (!grouped[skill.category]) grouped[skill.category] = [];

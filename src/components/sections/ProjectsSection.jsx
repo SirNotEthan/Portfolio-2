@@ -6,6 +6,8 @@ import { FaGithub, FaExternalLinkAlt, FaStar } from 'react-icons/fa';
 import CommandLine from '../terminal/CommandLine';
 import TerminalOutput from '../terminal/TerminalOutput';
 
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+
 const CATEGORIES = ['All', 'Web Development', 'Game Development', '3D Modeling'];
 
 const FLAGS = {
@@ -18,7 +20,6 @@ const FLAGS = {
 export default function ProjectsSection({
   projects,
   featuredProjects,
-  projectsLoading,
   projectStats
 }) {
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -35,7 +36,7 @@ export default function ProjectsSection({
         <div className="mb-16">
           <CommandLine command="git log --oneline --featured" />
           <TerminalOutput delay={600}>
-            <div className="space-y-6 max-w-4xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
               {featuredProjects.map((project) => (
                 <FeaturedCard key={project.id} project={project} />
               ))}
@@ -68,13 +69,6 @@ export default function ProjectsSection({
             </button>
           ))}
         </div>
-
-        {/* Loading state */}
-        {projectsLoading && (
-          <div className="py-4" style={{ color: 'var(--terminal-amber)' }}>
-            Loading projects from GitHub...
-          </div>
-        )}
 
         {/* Project table */}
         <div className="overflow-x-auto">
@@ -161,6 +155,56 @@ export default function ProjectsSection({
   );
 }
 
+function ImageGallery({ images, alt }) {
+  const [current, setCurrent] = useState(0);
+  if (!images || images.length === 0) return null;
+
+  const prev = () => setCurrent((c) => (c - 1 + images.length) % images.length);
+  const next = () => setCurrent((c) => (c + 1) % images.length);
+
+  return (
+    <div className="pt-1 pb-1 relative group rounded-sm overflow-hidden" style={{ background: 'var(--terminal-surface)', border: '1px solid var(--terminal-border)' }}>
+      <img
+        src={images[current]}
+        alt={`${alt} — ${current + 1} of ${images.length}`}
+        className="w-full rounded-sm object-contain"
+        style={{ maxHeight: '400px' }}
+      />
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={(e) => { e.stopPropagation(); prev(); }}
+            className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-sm cursor-pointer"
+            style={{ background: 'rgba(0,0,0,0.6)', color: 'var(--terminal-fg)' }}
+          >
+            <FaChevronLeft className="text-xs" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); next(); }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-sm cursor-pointer"
+            style={{ background: 'rgba(0,0,0,0.6)', color: 'var(--terminal-fg)' }}
+          >
+            <FaChevronRight className="text-xs" />
+          </button>
+          <div className="flex justify-center gap-1.5 mt-2">
+            {images.map((_, i) => (
+              <button
+                key={i}
+                onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
+                className="w-1.5 h-1.5 rounded-full transition-colors cursor-pointer"
+                style={{
+                  background: i === current ? 'var(--terminal-amber)' : 'var(--terminal-comment)',
+                  opacity: i === current ? 1 : 0.4,
+                }}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function FeaturedCard({ project }) {
   const hash = Math.random().toString(16).slice(2, 9);
   const date = project.updatedAt
@@ -198,6 +242,8 @@ function FeaturedCard({ project }) {
           {project.name}
         </div>
         <div style={{ color: 'var(--terminal-fg)' }}>{project.description}</div>
+
+        <ImageGallery images={project.images} alt={project.name} />
 
         {/* Tech tags */}
         <div className="flex flex-wrap gap-2">
@@ -263,6 +309,8 @@ function ExpandedDetail({ project }) {
     >
       <div className="space-y-2">
         <div style={{ color: 'var(--terminal-fg)' }}>{project.description}</div>
+
+        <ImageGallery images={project.images} alt={project.name} />
 
         {project.technologies?.length > 0 && (
           <div className="flex flex-wrap gap-2">
