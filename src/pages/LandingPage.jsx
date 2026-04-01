@@ -13,6 +13,7 @@ import AboutSection from '../components/sections/AboutSection';
 import SkillsSection from '../components/sections/SkillsSection';
 import ProjectsSection from '../components/sections/ProjectsSection';
 import ContactSection from '../components/sections/ContactSection';
+import ServicesSection from '../components/sections/ServicesSection';
 
 const skills = [
     { name: 'React', icon: <FaReact className="text-blue-400" />, category: 'Frontend'},
@@ -30,6 +31,7 @@ export default function LandingPage() {
     const aboutRef = useRef(null);
     const skillsRef = useRef(null);
     const projectsRef = useRef(null);
+    const servicesRef = useRef(null);
     const contactRef = useRef(null);
 
     const { githubStats } = useGitHubStats();
@@ -44,12 +46,13 @@ export default function LandingPage() {
         about: { description: 'Read about me', action: () => scrollTo(aboutRef), aliases: ['cat about.md'] },
         skills: { description: 'View my skills', action: () => scrollTo(skillsRef), aliases: ['tree skills/', 'ls skills/'] },
         projects: { description: 'Browse projects', action: () => scrollTo(projectsRef), aliases: ['ls projects/'] },
+        services: { description: 'View pricing & services', action: () => scrollTo(servicesRef), aliases: ['cat pricing.json'] },
         contact: { description: 'Get in touch', action: () => scrollTo(contactRef), aliases: ['mail ethan'] },
         resume: { description: 'Download resume', action: () => alert('Add your resume PDF to /public/resume.pdf') },
     };
 
     const handleNavigate = (section) => {
-        const refs = { home: heroRef, about: aboutRef, skills: skillsRef, projects: projectsRef, contact: contactRef };
+        const refs = { home: heroRef, about: aboutRef, skills: skillsRef, projects: projectsRef, services: servicesRef, contact: contactRef };
         if (refs[section]) scrollTo(refs[section]);
     };
 
@@ -73,6 +76,10 @@ export default function LandingPage() {
                     featuredProjects={featuredProjects}
                     projectStats={projectStats}
                 />
+            </div>
+
+            <div ref={servicesRef}>
+                <ServicesSection />
             </div>
 
             <div ref={contactRef}>
