@@ -97,6 +97,15 @@ export default function AboutSection({ githubStats }) {
                   <StatBlock label="Followers" value={githubStats.followers} color="var(--terminal-purple)" />
                 </div>
               </div>
+
+              {/* Contribution graph */}
+              <div className="mt-4 pt-3 overflow-x-auto" style={{ borderTop: '1px solid var(--terminal-border)' }}>
+                <img
+                  src="https://ghchart.rshah.org/39FF14/SirNotEthan"
+                  alt="SirNotEthan's GitHub contribution graph"
+                  className="w-full min-w-[600px]"
+                />
+              </div>
             </div>
           )}
 

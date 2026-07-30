@@ -10,12 +10,25 @@ export default function TerminalPrompt({ commands }) {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [feedback, setFeedback] = useState(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showHint, setShowHint] = useState(false);
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (localStorage.getItem('portfolio_hint_seen')) return;
+    const timer = setTimeout(() => setShowHint(true), 4000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const dismissHint = () => {
+    setShowHint(false);
+    localStorage.setItem('portfolio_hint_seen', '1');
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const trimmed = inputValue.trim().toLowerCase();
     if (!trimmed) return;
+    dismissHint();
 
     setCommandHistory(prev => [...prev, trimmed]);
     setHistoryIndex(-1);
@@ -149,6 +162,27 @@ export default function TerminalPrompt({ commands }) {
           )}
         </AnimatePresence>
 
+        {/* Discovery hint */}
+        <AnimatePresence>
+          {showHint && (
+            <MotionDiv
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="px-4 pt-2 text-xs flex items-center justify-between gap-2"
+              style={{ color: 'var(--terminal-comment)' }}
+            >
+              <span>
+                Tip: type <span style={{ color: 'var(--terminal-amber)' }}>help</span> to see every command, or press{' '}
+                <span style={{ color: 'var(--terminal-amber)' }}>/</span> to jump to this prompt.
+              </span>
+              <button onClick={dismissHint} className="cursor-pointer hover:opacity-80" aria-label="Dismiss hint">
+                <HiX />
+              </button>
+            </MotionDiv>
+          )}
+        </AnimatePresence>
+
         {/* Input line */}
         <form onSubmit={handleSubmit} className="flex items-center px-4 py-3">
           <span style={{ color: 'var(--terminal-amber)' }}>ethan</span>
@@ -162,6 +196,7 @@ export default function TerminalPrompt({ commands }) {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
+            onFocus={dismissHint}
             className="flex-1 bg-transparent outline-none ml-1"
             style={{ color: 'var(--terminal-fg)', caretColor: 'var(--terminal-amber)' }}
             placeholder="type a command... (press / to focus)"
@@ -203,8 +238,8 @@ export default function TerminalPrompt({ commands }) {
         </AnimatePresence>
 
         <button
-          onClick={() => setShowMobileMenu(!showMobileMenu)}
-          className="w-12 h-12 rounded-full flex items-center justify-center border text-lg transition-colors"
+          onClick={() => { setShowMobileMenu(!showMobileMenu); dismissHint(); }}
+          className="w-12 h-12 rounded-full flex items-center justify-center border text-lg transition-colors relative"
           style={{
             background: 'var(--terminal-chrome)',
             borderColor: 'var(--terminal-border)',
@@ -212,6 +247,12 @@ export default function TerminalPrompt({ commands }) {
           }}
         >
           {showMobileMenu ? <HiX /> : <span>$_</span>}
+          {showHint && !showMobileMenu && (
+            <span
+              className="absolute -top-1 -right-1 w-3 h-3 rounded-full"
+              style={{ background: 'var(--terminal-amber)' }}
+            />
+          )}
         </button>
       </div>
 

@@ -1,20 +1,23 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const MotionDiv = motion.div;
-import { FaGithub, FaExternalLinkAlt, FaStar } from 'react-icons/fa';
+import { FaGithub, FaExternalLinkAlt, FaStar, FaFileAlt } from 'react-icons/fa';
 import CommandLine from '../terminal/CommandLine';
 import TerminalOutput from '../terminal/TerminalOutput';
+import { caseStudies } from '../../data/caseStudies';
 
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
-const CATEGORIES = ['All', 'Web Development', 'Game Development', '3D Modeling'];
+const CATEGORIES = ['All', 'Web Development', 'Game Development', '3D Modeling', 'Infrastructure'];
 
 const FLAGS = {
   'All': '--all',
   'Web Development': '--web',
   'Game Development': '--games',
-  '3D Modeling': '--3d'
+  '3D Modeling': '--3d',
+  'Infrastructure': '--infra'
 };
 
 export default function ProjectsSection({
@@ -155,6 +158,20 @@ export default function ProjectsSection({
   );
 }
 
+function Highlights({ highlights }) {
+  if (!highlights || highlights.length === 0) return null;
+  return (
+    <ul className="space-y-1 pl-4">
+      {highlights.map((h, i) => (
+        <li key={i} className="flex items-start gap-2 text-xs" style={{ color: 'var(--terminal-comment)' }}>
+          <span style={{ color: 'var(--terminal-amber)' }}>&gt;</span>
+          <span>{h}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function ImageGallery({ images, alt }) {
   const [current, setCurrent] = useState(0);
   if (!images || images.length === 0) return null;
@@ -167,6 +184,7 @@ function ImageGallery({ images, alt }) {
       <img
         src={images[current]}
         alt={`${alt} — ${current + 1} of ${images.length}`}
+        loading="lazy"
         className="w-full rounded-sm object-contain"
         style={{ maxHeight: '400px' }}
       />
@@ -243,6 +261,8 @@ function FeaturedCard({ project }) {
         </div>
         <div style={{ color: 'var(--terminal-fg)' }}>{project.description}</div>
 
+        <Highlights highlights={project.highlights} />
+
         <ImageGallery images={project.images} alt={project.name} />
 
         {/* Tech tags */}
@@ -271,6 +291,15 @@ function FeaturedCard({ project }) {
 
         {/* Links */}
         <div className="flex gap-4 pt-1">
+          {project.slug && caseStudies[project.slug] && (
+            <Link
+              to={`/work/${project.slug}`}
+              className="flex items-center gap-1 text-xs hover:opacity-80 transition-opacity"
+              style={{ color: 'var(--terminal-amber)' }}
+            >
+              <FaFileAlt /> Case study
+            </Link>
+          )}
           {project.link && project.link !== '#' && (
             <a
               href={project.link}
@@ -283,15 +312,17 @@ function FeaturedCard({ project }) {
               {project.category === 'Game Development' ? 'Play' : project.category === '3D Modeling' ? 'View' : 'Demo'}
             </a>
           )}
-          <a
-            href={project.githubLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-xs hover:opacity-80 transition-opacity"
-            style={{ color: 'var(--terminal-fg)' }}
-          >
-            <FaGithub /> Source
-          </a>
+          {project.githubLink && (
+            <a
+              href={project.githubLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs hover:opacity-80 transition-opacity"
+              style={{ color: 'var(--terminal-fg)' }}
+            >
+              <FaGithub /> Source
+            </a>
+          )}
         </div>
       </div>
     </div>
@@ -309,6 +340,8 @@ function ExpandedDetail({ project }) {
     >
       <div className="space-y-2">
         <div style={{ color: 'var(--terminal-fg)' }}>{project.description}</div>
+
+        <Highlights highlights={project.highlights} />
 
         <ImageGallery images={project.images} alt={project.name} />
 
@@ -343,15 +376,17 @@ function ExpandedDetail({ project }) {
               {project.category === 'Game Development' ? 'Play' : 'Demo'}
             </a>
           )}
-          <a
-            href={project.githubLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-xs hover:opacity-80 transition-opacity"
-            style={{ color: 'var(--terminal-fg)' }}
-          >
-            <FaGithub /> Source
-          </a>
+          {project.githubLink && (
+            <a
+              href={project.githubLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs hover:opacity-80 transition-opacity"
+              style={{ color: 'var(--terminal-fg)' }}
+            >
+              <FaGithub /> Source
+            </a>
+          )}
         </div>
       </div>
     </div>

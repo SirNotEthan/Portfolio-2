@@ -42,7 +42,7 @@ export const serviceTiers = [
   {
     id: 'premium',
     name: 'Premium / Fully Custom',
-    priceRange: '£350–£700',
+    priceRange: '£1,200–£2,000',
     scope: 'Multi-section',
     features: [
       'Fully custom design',

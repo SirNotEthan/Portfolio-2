@@ -2,8 +2,6 @@ import { useState } from 'react';
 import CommandLine from '../terminal/CommandLine';
 import TerminalOutput from '../terminal/TerminalOutput';
 
-const WEBHOOK_URL = "https://discord.com/api/webhooks/1345817746583060520/XDfTWRU2XiKQAc5stGLFdsLxELU6Gim63Sti7E-ThVjbBO5r-n86tB8uyay7UvwRkVV3";
-
 export default function ContactSection() {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [status, setStatus] = useState(null); // null | 'sending' | 'success' | 'error'
@@ -16,26 +14,14 @@ export default function ContactSection() {
     e.preventDefault();
     setStatus('sending');
 
-    const discordMessage = {
-      embeds: [{
-        title: "New Contact Form Submission",
-        color: 16760576, // amber
-        fields: [
-          { name: "Name", value: formData.name || "No Name Provided", inline: true },
-          { name: "Email", value: formData.email || "No Email Provided", inline: true },
-          { name: "Message", value: formData.message || "No Message Provided" }
-        ],
-        footer: { text: "Portfolio Terminal Contact Form" },
-        timestamp: new Date().toISOString()
-      }]
-    };
-
     try {
-      await fetch(WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(discordMessage)
+      const referredBy = localStorage.getItem('portfolio_referral') || '';
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, referredBy }),
       });
+      if (!res.ok) throw new Error('Request failed');
       setStatus('success');
       setFormData({ name: '', email: '', message: '' });
     } catch {

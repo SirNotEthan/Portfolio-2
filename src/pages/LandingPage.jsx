@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { FaReact, FaNodeJs } from 'react-icons/fa';
 import { SiTypescript, SiMongodb, SiLua, SiRoblox, SiCss3, SiHtml5 } from 'react-icons/si';
 
@@ -14,6 +14,8 @@ import SkillsSection from '../components/sections/SkillsSection';
 import ProjectsSection from '../components/sections/ProjectsSection';
 import ContactSection from '../components/sections/ContactSection';
 import ServicesSection from '../components/sections/ServicesSection';
+import BlogSection from '../components/sections/BlogSection';
+import UsesSection from '../components/sections/UsesSection';
 
 const skills = [
     { name: 'React', icon: <FaReact className="text-blue-400" />, category: 'Frontend'},
@@ -32,10 +34,17 @@ export default function LandingPage() {
     const skillsRef = useRef(null);
     const projectsRef = useRef(null);
     const servicesRef = useRef(null);
+    const blogRef = useRef(null);
+    const usesRef = useRef(null);
     const contactRef = useRef(null);
 
     const { githubStats } = useGitHubStats();
     const projectStats = getProjectStats();
+
+    useEffect(() => {
+        const ref = new URLSearchParams(window.location.search).get('ref');
+        if (ref) localStorage.setItem('portfolio_referral', ref.slice(0, 100));
+    }, []);
 
     const scrollTo = (ref) => {
         ref.current?.scrollIntoView({ behavior: 'smooth' });
@@ -47,12 +56,14 @@ export default function LandingPage() {
         skills: { description: 'View my skills', action: () => scrollTo(skillsRef), aliases: ['tree skills/', 'ls skills/'] },
         projects: { description: 'Browse projects', action: () => scrollTo(projectsRef), aliases: ['ls projects/'] },
         services: { description: 'View pricing & services', action: () => scrollTo(servicesRef), aliases: ['cat pricing.json'] },
+        blog: { description: 'Read dev log posts', action: () => scrollTo(blogRef), aliases: ['ls blog/'] },
+        now: { description: "See what I'm working on", action: () => scrollTo(usesRef), aliases: ['cat now.md', 'cat uses.md'] },
         contact: { description: 'Get in touch', action: () => scrollTo(contactRef), aliases: ['mail ethan'] },
         resume: { description: 'Download resume', action: () => alert('Add your resume PDF to /public/resume.pdf') },
     };
 
     const handleNavigate = (section) => {
-        const refs = { home: heroRef, about: aboutRef, skills: skillsRef, projects: projectsRef, services: servicesRef, contact: contactRef };
+        const refs = { home: heroRef, about: aboutRef, skills: skillsRef, projects: projectsRef, services: servicesRef, blog: blogRef, now: usesRef, contact: contactRef };
         if (refs[section]) scrollTo(refs[section]);
     };
 
@@ -80,6 +91,14 @@ export default function LandingPage() {
 
             <div ref={servicesRef}>
                 <ServicesSection />
+            </div>
+
+            <div ref={blogRef}>
+                <BlogSection />
+            </div>
+
+            <div ref={usesRef}>
+                <UsesSection />
             </div>
 
             <div ref={contactRef}>
